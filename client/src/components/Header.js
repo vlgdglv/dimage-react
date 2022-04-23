@@ -1,6 +1,8 @@
 import React from 'react';
 import { Navbar, Nav, Container, Button, NavbarBrand } from 'react-bootstrap';
 
+import { Link, NavLink, Route } from 'react-router-dom';
+
 import Web3 from 'web3';
 import getWeb3 from "../getWeb3";
 

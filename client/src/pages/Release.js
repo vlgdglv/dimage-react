@@ -7,6 +7,11 @@ import Web3 from 'web3'
 import ReleaseContract from '../abis/Release.json'
 // import {Router, useHistory } from 'react-router-dom';
 // const Release = () => <h1 style={{ paddingTop:"150px" }}>Releasing</h1>;
+//http
+import { releaseImage } from "../http/release";
+//components
+import Footer from "../components/Footer";
+import AccountInfo from "../components/AccountInfo";
 
 class Release extends React.Component{
   
@@ -19,6 +24,7 @@ class Release extends React.Component{
       buffer: null,
       sha3:'',
       sign:'',
+      hash:'',
       imgTitle:'',
       account: '',
       balance: '',
@@ -38,6 +44,8 @@ class Release extends React.Component{
     this.setState({account})
     let web3 = this.context.web3
     this.setState({web3})
+    // let balance = this.context.balance
+    // this.setState({balance})
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
       console.log("[update]"+balance)
@@ -46,6 +54,9 @@ class Release extends React.Component{
     window.ethereum.on('accountsChanged', (account) => {
       console.log("[release]change account:"+account)
       account = account.toString()
+      if (account === '') {
+        this.props.history.push('/error')
+      }
       this.setState({account})
       web3.eth.getBalance(account).then((balance)=>{
         this.setState({balance: web3.utils.fromWei(balance)})
@@ -90,11 +101,13 @@ class Release extends React.Component{
     event.preventDefault()
     const web3 = this.context.web3
     this.setState({imgTitle: this.imgTitle.value})
-    web3.eth.sign(this.state.sha3, this.state.account).then((result)=>{
+    web3.eth.sign(this.state.sha3, this.state.account)
+    .then((result)=>{
       console.log(result)
       this.setState({sign:result})
-    }).then(() =>{
-      const hash = "hash";
+    })
+    .then(() =>{
+      const hash = "hash"; //TODO: later will be IPFS hash
       const sha3 = this.state.sha3;
       const sign = this.state.sign;
       const title = this.state.imgTitle;
@@ -103,6 +116,23 @@ class Release extends React.Component{
       .send({from: this.state.account})
       .on('transactionHash', (txHash) => {
         console.log(txHash)
+      })
+    })
+    .then(() => {
+      const imageData = {
+        author: this.state.account,
+        hash: "IPFS hash",
+        sha3: this.state.sha3,
+        signature: this.state.sign,
+        title: this.state.imgTitle
+      }
+      console.log(imageData)
+      releaseImage(imageData, true).then((res) => {
+        if(res.succuse) {
+          console.log("success in server")
+        }else{
+          console.error(res)
+        }
       })
     })
   }
@@ -116,13 +146,14 @@ class Release extends React.Component{
           </div>
           <div className="row g-5 ">
             <div className="col-md-5 col-lg-5 order-md-last" style={{ padding:"auto"  }}>
-              <div className="border rounded  my-5" style={{ marginBottom:"auto" }}>  
+              {/* <div className="border rounded  my-5" style={{ marginBottom:"auto" }}>  
                 <h5 className="my-3 text-center" style={{ color:"#008B45"}}>Account Information</h5>
                 <h5 className="mx-3">Address</h5>
                 <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.account}</p>
                 <h5 className="mx-3">Balance</h5>
                 <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.balance} ETH</p>
-              </div>
+              </div> */}
+              <AccountInfo account={this.state.account} balance={this.state.balance}/>
               <div className="my-2">  
                 <h5 className="my-3">Tips:</h5>
                 <p>1<span role="img">⬆️</span>Upload your image and name a title</p>
@@ -175,9 +206,9 @@ class Release extends React.Component{
                 </div>
               </form>
             </div>
-            
           </div>
         </main>
+        <Footer/>
       </Container>
     )
   }

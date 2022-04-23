@@ -21,7 +21,11 @@ import "./App.css";
 
 
 class App extends Component {
-  state = { stora0geValue: 0, web3: null, account: null, contract: null };
+  state = { 
+    web3: null, 
+    account: null, 
+    balance: '',
+    contract: null };
 
   componentDidMount = async () => {
     try {
@@ -29,7 +33,7 @@ class App extends Component {
       getWeb3().then((web3) => {
         this.setState({web3})
         web3.eth.getAccounts().then((account) => {
-          // console.log(account[0])
+          console.log(account[0])
           this.setState({account:account[0]})
         })
       })
@@ -82,26 +86,19 @@ class App extends Component {
         {
         this.state.web3 && this.state.account ?
           <BrowserRouter>
-            <web3Context.Provider value={{"web3":this.state.web3,"account":this.state.account}}>
+            <web3Context.Provider value={{"web3":this.state.web3, "account":this.state.account}}>
               <Switch>  
                 <Route path="/" exact component={Home}/>
                 <Route path="/release" component={Release} />
                 <Route path="/detail" component={Detail} />
-                <Route path="/profile/:userId" component={Profile} />
+                <Route path="/profile" component={Profile} />
+                <Route path="/error" component={Error}/>
                 <Route component={Error} />
               </Switch>
             </web3Context.Provider>  
           </BrowserRouter>
         : <h2 style={{ paddingTop:"150px", textAlign:"center" }} > Loading Web3, account, and contract... </h2>
         }
-        <footer className="my-3 pt-5 text-muted text-center text-small">
-          <p className="mb-1">&copy; Company Name</p>
-          <ul className="list-inline">
-            <li className="list-inline-item"><a href="#">Privacy</a></li>
-            <li className="list-inline-item"><a href="#">Terms</a></li>
-            <li className="list-inline-item"><a href="#">Support</a></li>
-          </ul>
-        </footer>
       </div>
     );
   }

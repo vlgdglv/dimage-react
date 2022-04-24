@@ -1,5 +1,5 @@
 import React from "react";
-import { Container } from "react-bootstrap";
+import { Container, Form } from "react-bootstrap";
 //web3
 import { web3Context } from '../context/web3Context';
 import Web3 from 'web3'
@@ -8,10 +8,13 @@ import ReleaseContract from '../abis/Release.json'
 // import {Router, useHistory } from 'react-router-dom';
 // const Release = () => <h1 style={{ paddingTop:"150px" }}>Releasing</h1>;
 //http
-import { releaseImage } from "../http/release";
+import { releaseImage, uploadImage } from "../http/release";
 //components
 import Footer from "../components/Footer";
 import AccountInfo from "../components/AccountInfo";
+
+const watermark = require('watermarkjs')
+
 
 class Release extends React.Component{
   
@@ -20,8 +23,10 @@ class Release extends React.Component{
   constructor(props){
     super(props);
     this.state = {
+      imgID:0,
       image:null,
       buffer: null,
+      imgFile: null,
       sha3:'',
       sign:'',
       hash:'',
@@ -73,13 +78,20 @@ class Release extends React.Component{
     if (releaseNetworkData) {
       const release = new web3.eth.Contract(ReleaseContract.abi, releaseNetworkData.address)
       this.setState({ release })
-      console.log(release)
+      const tmpImgID = await release.methods.imageCount().call()
+      this.setState({ imgID: parseInt(tmpImgID)+1 }) 
+      console.log(this.state.imgID)
     }
   }
 
   captureFile = (event) => {
     event.preventDefault()
     const file = event.target.files[0]
+    if (file === null || file === '' || file === undefined) {
+      return;
+    }
+    
+    this.setState({imgFile: file})
     const bufferReader = new window.FileReader()
     const dataURLReader = new window.FileReader()
     bufferReader.readAsArrayBuffer(file)
@@ -101,11 +113,18 @@ class Release extends React.Component{
     event.preventDefault()
     const web3 = this.context.web3
     this.setState({imgTitle: this.imgTitle.value})
+    // thumbnail test
+    // this.uploadThumbnail(this.state.imgFile, this.state.sha3).then((res) => {
+    //   console.log(res)
+    // })
+    // ****************************************************************
+    //request for signature
     web3.eth.sign(this.state.sha3, this.state.account)
     .then((result)=>{
       console.log(result)
       this.setState({sign:result})
     })
+    //write image info to ethereum
     .then(() =>{
       const hash = "hash"; //TODO: later will be IPFS hash
       const sha3 = this.state.sha3;
@@ -116,26 +135,48 @@ class Release extends React.Component{
       .send({from: this.state.account})
       .on('transactionHash', (txHash) => {
         console.log(txHash)
-      })
-    })
-    .then(() => {
-      const imageData = {
-        author: this.state.account,
-        hash: "IPFS hash",
-        sha3: this.state.sha3,
-        signature: this.state.sign,
-        title: this.state.imgTitle
-      }
-      console.log(imageData)
-      releaseImage(imageData, true).then((res) => {
-        if(res.succuse) {
-          console.log("success in server")
-        }else{
-          console.error(res)
-        }
+        //upload image thumbnail with watermark
+        this.uploadThumbnail(this.state.imgFile, this.state.sha3).then((res)=>{
+          if(res.success) {
+            const imageData = {
+              imgID: this.state.imgID,
+              author: this.state.account,
+              hash: "IPFS hash",
+              sha3: this.state.sha3,
+              signature: this.state.sign,
+              title: this.state.imgTitle,
+              thumbnailPath: res.data.thumbnailPath
+            }
+            //post image info to database
+            releaseImage(imageData, true).then((res)=>{
+              console.log("post info:" + res)
+            })
+          }
+        }).catch((err) => {
+          console.log(err)
+        })
       })
     })
   }
+  
+  uploadThumbnail = (image, sha3) => {
+    console.log(image)
+    const wmText = '@' + this.state.account;
+    //generate watermark
+    return watermark([image])
+    .blob(watermark.text.lowerRight(wmText, '32px Josefin Slab', '#000',0.6))
+    .render()
+    .blob(watermark.text.upperLeft(wmText, '32px Josefin Slab', '#fff',0.6,32))
+    .then((img) => {
+      // console.log(img)
+      const imgFile = new File([img], image.name)
+      const formData = new FormData()
+      formData.append("file", imgFile)
+      formData.append("sha3", sha3)
+      return uploadImage(formData, true)
+    })
+  }
+
   render(){
     return(
       // <h1 style={{ paddingTop:"150px" }}>Releasing</h1>
@@ -146,13 +187,6 @@ class Release extends React.Component{
           </div>
           <div className="row g-5 ">
             <div className="col-md-5 col-lg-5 order-md-last" style={{ padding:"auto"  }}>
-              {/* <div className="border rounded  my-5" style={{ marginBottom:"auto" }}>  
-                <h5 className="my-3 text-center" style={{ color:"#008B45"}}>Account Information</h5>
-                <h5 className="mx-3">Address</h5>
-                <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.account}</p>
-                <h5 className="mx-3">Balance</h5>
-                <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.balance} ETH</p>
-              </div> */}
               <AccountInfo account={this.state.account} balance={this.state.balance}/>
               <div className="my-2">  
                 <h5 className="my-3">Tips:</h5>
@@ -168,7 +202,7 @@ class Release extends React.Component{
                   <h5 className="my-3">Upload your work</h5>
                   <div style={{ textAlign:"center"}}>
                     <input className="form-control-file"
-                      type="file" id="imageUpload" 
+                      type="file" id="imageFile" 
                       accept=".jpgm, .jpeg, .png, .bpm, .gif, .jpg"
                       onChange={this.captureFile}/>
                   </div>
@@ -193,6 +227,7 @@ class Release extends React.Component{
                     type="text"
                     className="form-control"
                     placeholder="Image title..."
+                    maxLength="200"
                     ref={(input) => {this.imgTitle = input}}
                     required />
                 </div>

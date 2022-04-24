@@ -17,6 +17,7 @@ import getWeb3 from "./getWeb3";
 import Web3 from "web3";
 
 import "./App.css";
+import Purchase from "./pages/Purchase";
 
 
 
@@ -92,6 +93,7 @@ class App extends Component {
                 <Route path="/release" component={Release} />
                 <Route path="/detail" component={Detail} />
                 <Route path="/profile" component={Profile} />
+                <Route path="/purchase" component={Purchase} />
                 <Route path="/error" component={Error}/>
                 <Route component={Error} />
               </Switch>

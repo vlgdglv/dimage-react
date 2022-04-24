@@ -1,18 +1,15 @@
 import React from 'react';
-import { Navbar, Nav, Container, Button, NavbarBrand } from 'react-bootstrap';
-
-import { Link, NavLink, Route } from 'react-router-dom';
+import { Navbar, Nav, Container } from 'react-bootstrap';
 
 import Web3 from 'web3';
-import getWeb3 from "../getWeb3";
 
 class Header extends React.Component {
 
   state = {web3: null, account: '', balance: ''}
 
-  constructor(props) {
-    super(props)
-  } 
+  // constructor(props) {
+  //   super(props)
+  // } 
 
   async loadWeb3() {
     if (window.ethereum) {

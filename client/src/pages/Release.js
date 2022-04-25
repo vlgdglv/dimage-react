@@ -233,11 +233,11 @@ class Release extends React.Component{
                 </div>
                 <hr className="my-3"></hr>
                 <div style={{ textAlign:"center" }}>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary"
-                  style={{ width:"50%", height:"50px"}}
-                  >Upload!</button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary"
+                    style={{ width:"50%", height:"50px"}}
+                    >Upload!</button>
                 </div>
               </form>
             </div>

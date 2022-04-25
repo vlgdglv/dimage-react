@@ -1,8 +1,8 @@
 import React from "react";
 import { Container } from "react-bootstrap";
 
-import  MyPagination  from '../components/MyPagination'
 import Album from "../components/Album";
+import Footer from "../components/Footer";
 
 const requireContext = require.context("../pics", true, /^\.\/.*\.png$/);
 const testImages = requireContext.keys().map(requireContext);
@@ -83,6 +83,7 @@ class Home extends React.Component{
             afterPageClicked={this.handlePageChange}
           />
         </div>
+        <Footer/>
       </main>
     )
   }

@@ -63,24 +63,16 @@ contract Release{
 
     function changeOwner(
         uint _id,
-        address payable newOwner,
-        address oldOwner
+        address payable newOwner
         ) public {
         
-        require(_id > 0 && _id <= imageCount );
-        // get image data
-        Image memory _image = images[_id];
-        //get Owner's address
-        // oldOwner = oldOwner;
-        address _owner = _image.owner;
+        if (_id <= 0 || _id > imageCount) return;    
         
-        require(tx.origin == _owner);
-        require(tx.origin == oldOwner);
-        require(newOwner != _owner);
-        require(newOwner != address(0x0));
-        
-        _image.owner = newOwner;
-        images[_id] = _image;
+        if (tx.origin != images[_id].owner) return;
+        if (newOwner == images[_id].owner) return;
+        if (newOwner == address(0x0)) return;
+
+        images[_id].owner = newOwner;
     }
 
     function changeSign(uint _id, string memory newSign) public{

@@ -6,9 +6,12 @@ module.exports = {
   contracts_build_directory: path.join(__dirname, "client/src/abis"),
   networks: {
     develop: {
-      port: 8545
+      port: 8545,
+      gas: 68719476735,   
+      
     }
   },
+
   compilers:{
     solc:{
       version: "^0.8.12",

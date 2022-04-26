@@ -4,6 +4,8 @@ pragma solidity ^0.8.12;
 import "./Release.sol";
 
 contract Purchase {
+
+    Release contractRelease;
     uint imageID; 
     address purchaser;
     address payable imageOwner;
@@ -19,11 +21,11 @@ contract Purchase {
     uint ownerShare;
 
     event purchaseLaunched(uint imageID,address purchaser, address imageOwner, address imageAuthor, uint amount);
-    event transferComplete(uint imageID,address purchaser, address imageOwner, address imageAuthor, uint amount);
-    event transferFailed(uint imageID,address transferor, address transferee, uint amount);
+    event transferComplete(address purchaser, address imageOwner, address imageAuthor);
+    event transferFailed(address transferor, address transferee);
     event purchaseDisengage(uint imageID, address canceller);
 
-    // function checkerRelease()     public view returns (address)       { return address(contractRelease); }
+    function checkerRelease()     public view returns (address)       { return address(contractRelease); }
     function checkerImageID()     public view returns (uint)          { return imageID; }
     function checkerPurchaser()   public view returns (address)       { return purchaser; }
     function checkerOwner()       public view returns (address)       { return imageOwner; }
@@ -44,7 +46,7 @@ contract Purchase {
     function checkerTmSp()        public view returns (uint)    { return block.timestamp; }
 
     constructor(
-        // address releaseAddress,
+        address releaseAddress,
         uint _imageID,
         address _purchaser,
         address payable _imageOwner,
@@ -60,11 +62,11 @@ contract Purchase {
         require(bytes(_SHA3).length != 0, "invalid sha3");
         require(_duration >= 15, "time too short");
 
-        // contractRelease = Release(releaseAddress);
+        contractRelease = Release(releaseAddress);
 
-        // require(_imageID > 0 && _imageID <= contractRelease.imageCount(), "invalid image ID");
-        // require(_imageOwner == contractRelease.getImageOwner(_imageID), "wrong owner");
-        // require(_imageAuthor == contractRelease.getImageAuthor(_imageID), "wrong author");
+        require(_imageID > 0 && _imageID <= contractRelease.imageCount(), "invalid image ID");
+        require(_imageOwner == contractRelease.getImageOwner(_imageID), "wrong owner");
+        require(_imageAuthor == contractRelease.getImageAuthor(_imageID), "wrong author");
 
         imageID = _imageID;
         purchaser = _purchaser;
@@ -81,25 +83,42 @@ contract Purchase {
         emit purchaseLaunched(_imageID, _purchaser, _imageOwner, _imageAuthor, amount);
     }
 
-    function confirmPurchase() public payable {
-        require(block.timestamp <= endTime, "Contract has closed!");        
-        require(tx.origin == imageOwner, "Who are you?");  
-        require(isClosed == false, "already done");
+    // function confirmPurchase() public payable {
+    //     require(block.timestamp <= endTime, "Contract has closed!");        
+    //     require(tx.origin == imageOwner, "Who are you?");  
+    //     require(isClosed == false, "already done");
+    //     isClosed = true;
+
+    //     bool tsfOwnerFlag =  (payable(imageOwner)).send(ownerShare);
+    //     bool tsfAuthorFlag = (payable(imageAuthor)).send(authorShare);
+
+    //     if (tsfOwnerFlag && tsfAuthorFlag) {
+    //       emit transferComplete(purchaser, imageOwner, imageAuthor);
+    //     } 
+    //     if (tsfOwnerFlag){
+    //       emit transferFailed(purchaser, imageOwner); 
+    //     }
+    //     if (tsfAuthorFlag){
+    //       emit transferFailed(purchaser,imageAuthor);
+    //     }
+    // }
+
+    function confirmPurchase2() public payable {
+        if (block.timestamp > endTime) return;
+        if (tx.origin != imageOwner) return;
+        if (isClosed) return;
         isClosed = true;
+        
+        contractRelease.changeOwner(imageID, payable(purchaser));
 
         bool tsfOwnerFlag =  (payable(imageOwner)).send(ownerShare);
         bool tsfAuthorFlag = (payable(imageAuthor)).send(authorShare);
 
         if (tsfOwnerFlag && tsfAuthorFlag) {
-          emit transferComplete(imageID, purchaser, imageOwner, imageAuthor, amount);
-        } 
-        if (tsfOwnerFlag){
-          emit transferFailed(imageID, purchaser, imageOwner, ownerShare); 
+          emit transferComplete(purchaser, imageOwner, imageAuthor);
+        } else{
+          isClosed = false;
         }
-        if (tsfAuthorFlag){
-          emit transferFailed(imageID, purchaser, imageAuthor, authorShare);
-        }
-
     }
 
     function declinePurchase() public payable {
@@ -107,13 +126,11 @@ contract Purchase {
       require(msg.sender == imageOwner, "Who are you?");  
       require(isClosed == false, "already done");
       // require(contractRelease.getImageOwner(imageID) == imageOwner, "");
-      
       isClosed = true;
-
       if ((payable(purchaser)).send(amount)) {
         emit purchaseDisengage(imageID, imageOwner);
       }else {
-        emit transferFailed(imageID, address(this), purchaser, amount);
+        emit transferFailed(address(this), purchaser);
       }
     }
 
@@ -127,7 +144,11 @@ contract Purchase {
       if ((payable(purchaser)).send(amount)) {
         emit purchaseDisengage(imageID, purchaser);
       }else {
-        emit transferFailed(imageID, address(this), purchaser, amount);
+        emit transferFailed(address(this), purchaser);
       }
+    }
+
+    function callTest() public payable {
+      contractRelease.changeOwner(imageID, payable(purchaser));
     }
 }

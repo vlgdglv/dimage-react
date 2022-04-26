@@ -65,17 +65,17 @@ contract Release{
         uint _id,
         address payable newOwner,
         address oldOwner
-        ) public payable{
+        ) public {
         
-
         require(_id > 0 && _id <= imageCount );
-        //get image data
+        // get image data
         Image memory _image = images[_id];
         //get Owner's address
+        // oldOwner = oldOwner;
         address _owner = _image.owner;
         
-        require(msg.sender == _owner);
-        require(oldOwner == _owner);
+        require(tx.origin == _owner);
+        require(tx.origin == oldOwner);
         require(newOwner != _owner);
         require(newOwner != address(0x0));
         
@@ -83,7 +83,7 @@ contract Release{
         images[_id] = _image;
     }
 
-    function changeSign(uint _id, string memory newSign) public payable{
+    function changeSign(uint _id, string memory newSign) public{
       require(_id > 0 && _id <= imageCount );
       require(bytes(newSign).length > 0);
       //get image data
@@ -94,6 +94,15 @@ contract Release{
 
       _image.signature = newSign;
       images[_id] = _image;
-      
     } 
+
+    function getImageOwner(uint imageID) public view returns(address) {
+      require(imageID > 0 && imageID <= imageCount );
+      return images[imageID].owner;
+    }
+
+    function getImageAuthor(uint imageID) public view returns(address) {
+      require(imageID > 0 && imageID <= imageCount );
+      return images[imageID].author;
+    }
 }

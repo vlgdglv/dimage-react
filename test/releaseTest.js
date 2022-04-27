@@ -55,7 +55,7 @@ contract('Release',([deployer, author, buyer]) => {
     })
     
     it('change owner', async()=> {
-        await release.changeOwner(1, buyer, author, {from: author})
+        await release.changeOwner(1, buyer, {from: author})
         const image = await release.images(1)
         assert.equal(image.owner, buyer,'Owner is correct')
         assert.equal(image.author, author,'Author is correct')
@@ -75,6 +75,13 @@ contract('Release',([deployer, author, buyer]) => {
       await release.changeSign(3,"newSign", {from : author}).should.be.rejected
       await release.changeSign(2,"", {from : author}).should.be.rejected
       await release.changeSign(3,"newSign", {from : buyer}).should.be.rejected
+    })
+
+    it('test sha3 match', async() => {
+      let result = await release.isSHA3Match(1, "sha3")
+      console.log(result)
+      result = await release.isSHA3Match(2, "sha32")
+      console.log(result)
     })
   })
 })

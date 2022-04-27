@@ -66,11 +66,14 @@ contract Release{
         address payable newOwner
         ) public {
         
-        if (_id <= 0 || _id > imageCount) return;    
-        
-        if (tx.origin != images[_id].owner) return;
-        if (newOwner == images[_id].owner) return;
-        if (newOwner == address(0x0)) return;
+        bool FlagID = _id > 0 && _id <= imageCount;
+        bool FlagOldOwner = tx.origin == images[_id].owner;
+        bool FlagNewOwner = newOwner != images[_id].owner && newOwner != address(0x0);
+        // if (_id <= 0 || _id > imageCount) return;    
+        // if (tx.origin != images[_id].owner) return;
+        // if (newOwner == images[_id].owner) return;
+        // if (newOwner == address(0x0)) return;
+        require(FlagID && FlagOldOwner && FlagNewOwner);
 
         images[_id].owner = newOwner;
     }
@@ -97,4 +100,16 @@ contract Release{
       require(imageID > 0 && imageID <= imageCount );
       return images[imageID].author;
     }
+
+    function isSHA3Match(uint imageID, string memory testSHA3) public view returns(bool) {
+      require(imageID > 0 && imageID <= imageCount );
+      string memory SHA3 = images[imageID].sha3;
+      if (bytes(SHA3).length != bytes(testSHA3).length) {
+          return false;
+      } else {
+          return keccak256(bytes(testSHA3)) == keccak256(bytes(SHA3));
+      }
+    }
+
+    
 }

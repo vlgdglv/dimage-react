@@ -5,7 +5,7 @@ import Footer from "../components/Footer";
 import Creation from './profile/Creation';
 import Overview from './profile/Overview';
 import Possession from './profile/Possession';
-import Trades from './profile/Trades';
+import Trades from './Trades';
 //web3
 import { web3Context } from '../context/web3Context';
 //
@@ -72,7 +72,7 @@ class Profile extends React.Component {
           <button className="nav-link link-dark active" id="v-pills-overview-tab" data-bs-toggle="pill" data-bs-target="#v-pills-overview" type="button" role="tab" aria-controls="v-pills-overview" aria-selected="true">Overview</button>
           <button className="nav-link link-dark" id="v-pills-creation-tab" data-bs-toggle="pill" data-bs-target="#v-pills-creation" type="button" role="tab" aria-controls="v-pills-creation" aria-selected="false">Creation</button>
           <button className="nav-link link-dark" id="v-pills-possession-tab" data-bs-toggle="pill" data-bs-target="#v-pills-possession" type="button" role="tab" aria-controls="v-pills-possession" aria-selected="false">Possession</button>
-          <button className="nav-link link-dark" id="v-pills-trades-tab" data-bs-toggle="pill" data-bs-target="#v-pills-trades" type="button" role="tab" aria-controls="v-pills-trades" aria-selected="false">Trades</button>
+          {/* <button className="nav-link link-dark" id="v-pills-trades-tab" data-bs-toggle="pill" data-bs-target="#v-pills-trades" type="button" role="tab" aria-controls="v-pills-trades" aria-selected="false">Trades</button> */}
         </div>
         </div>
         <div className="tab-content" id="v-pills-tabContent" style={{ minWidth:"calc(100vw - 250px)"}}>
@@ -81,7 +81,7 @@ class Profile extends React.Component {
           </div>
           <div className="tab-pane fade" id="v-pills-creation" role="tabpanel" aria-labelledby="v-pills-creation-tab"><Creation/></div>
           <div className="tab-pane fade" id="v-pills-possession" role="tabpanel" aria-labelledby="v-pills-possession-tab"><Possession/></div>
-          <div className="tab-pane fade" id="v-pills-trades" role="tabpanel" aria-labelledby="v-pills-trades-tab"><Trades/></div>
+          {/* <div className="tab-pane fade" id="v-pills-trades" role="tabpanel" aria-labelledby="v-pills-trades-tab"><Trades/></div> */}
         </div>
     </main>    
   )

@@ -6,8 +6,9 @@ contract Release{
     string public contractName;
     uint public imageCount = 0;
     mapping(uint => Image) public images;
+  
     
-    struct Image{
+    struct Image {
         uint id;
         string hash;
         string sha3;

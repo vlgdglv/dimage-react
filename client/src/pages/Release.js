@@ -4,7 +4,7 @@ import { Container, Form } from "react-bootstrap";
 import { web3Context } from '../context/web3Context';
 import Web3 from 'web3'
 //abis
-import ReleaseContract from '../abis/Release.json'
+import ContractRelease from '../abis/Release.json'
 // import {Router, useHistory } from 'react-router-dom';
 // const Release = () => <h1 style={{ paddingTop:"150px" }}>Releasing</h1>;
 //http
@@ -74,9 +74,9 @@ class Release extends React.Component{
   async loadBlockchainData() {
     const web3 = this.context.web3
     const networkId = await web3.eth.net.getId()
-    const releaseNetworkData = ReleaseContract.networks[networkId]
+    const releaseNetworkData = ContractRelease.networks[networkId]
     if (releaseNetworkData) {
-      const release = new web3.eth.Contract(ReleaseContract.abi, releaseNetworkData.address)
+      const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
       this.setState({ release })
       const tmpImgID = await release.methods.imageCount().call()
       this.setState({ imgID: parseInt(tmpImgID)+1 }) 

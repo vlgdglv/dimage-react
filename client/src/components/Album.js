@@ -1,5 +1,6 @@
 import React from "react";
 import { Container } from "react-bootstrap";
+import { withRouter } from "react-router";
 
 import  MyPagination  from '../components/MyPagination'
 
@@ -11,6 +12,16 @@ class Album extends React.Component {
       totalPage:0,
       currentPage: 0,
     }
+  }
+
+  handlePurchase = (event) => {
+    event.preventDefault()
+    const id = event.target.id
+    // console.log(this.props.images[id])
+    this.props.history.push({
+      pathname: 'purchase',
+      id:`${id}`,
+    })
   }
 
   render() {
@@ -27,7 +38,7 @@ class Album extends React.Component {
           {
             this.props.images.map((image, key) => {
               return (
-                <div className="col overflow-hiden rounded">
+                <div className="col overflow-hiden rounded" id={key}>
                   <div className="card shadow">
                     <div className="bd-placeholder-img card-img-top " role="img" preserveAspectRatio="xMidYMid slice" focusable="false">
                       <div className="thumbnail">
@@ -44,7 +55,12 @@ class Album extends React.Component {
                       <p className="card-text text-truncate">{image.title}</p>
                       <div className="d-flex justify-content-between align-items-center">
                         <div className="btn-group">
-                          <button type="button" className="btn btn-sm btn-outline-secondary">Buy</button>
+                          <button 
+                            type="button" 
+                            className="btn btn-sm btn-outline-secondary"
+                            id={image.imageID}
+                            onClick={this.handlePurchase}
+                            >Buy</button>
                           <button type="button" className="btn btn-sm btn-outline-secondary">Detail</button>
                         </div>
                         <small className="text-muted text-truncate">{image.date}</small>
@@ -63,4 +79,4 @@ class Album extends React.Component {
 
 }
 
-export default Album;
+export default withRouter(Album);

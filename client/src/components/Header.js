@@ -50,7 +50,8 @@ class Header extends React.Component {
           <Nav>
             <Nav.Link className='nav-link' href="/">Home</Nav.Link>
             <Nav.Link className='nav-link' href="/release">Release</Nav.Link>
-            <Nav.Link className='nav-link' href="/profile/nmsl">Profile</Nav.Link>
+            <Nav.Link className='nav-link' href="/trades">Trades</Nav.Link>
+            <Nav.Link className='nav-link' href="/profile">Profile</Nav.Link>
             {/* {
               this.state.account == null ?
               <Button className='btn-light btn-sm' onClick={this.handleClick}>get Web3</Button>

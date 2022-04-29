@@ -18,13 +18,14 @@ import Web3 from "web3";
 
 import "./App.css";
 import Purchase from "./pages/Purchase";
+import Trades from "./pages/Trades";
 
 
 
 class App extends Component {
   state = { 
     web3: null, 
-    account: null, 
+    account: '', 
     balance: '',
     contract: null };
 
@@ -39,9 +40,9 @@ class App extends Component {
         })
       })
 
-      window.ethereum.on('connect', (connectInfo) => {
-        console.log("connect info" + connectInfo)
-      })      
+      // window.ethereum.on('connect', (connectInfo) => {
+      //   console.log("connect info" + connectInfo)
+      // })      
 
       window.ethereum.on('accountsChanged', (account) => {
         // Handle the new account, or lack thereof.
@@ -94,6 +95,7 @@ class App extends Component {
                 <Route path="/detail" component={Detail} />
                 <Route path="/profile" component={Profile} />
                 <Route path={["/purchase","/purchase/:imgID"]} component={Purchase} />
+                <Route path="/trades" component={Trades} />
                 <Route path="/error" component={Error}/>
                 <Route component={Error} />
               </Switch>

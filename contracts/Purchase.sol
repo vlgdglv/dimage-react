@@ -17,6 +17,16 @@ contract Purchase {
     bool    public isClosed = false;
     uint    public authorShare;
     uint    public ownerShare;
+    Image public thisImage;
+    struct Image {
+        uint id;
+        string hash;
+        string sha3;
+        string signature;
+        string title;
+        address payable author;
+        address payable owner;
+    }
 
     event purchaseLaunched(uint imageID,address purchaser, address imageOwner, address imageAuthor, uint amount);
     event transferComplete(uint imageID,address purchaser, address imageOwner);
@@ -56,24 +66,23 @@ contract Purchase {
         bool FlagOwner = _imageOwner != address(0x0);
         bool FlagAuthor = _imageAuthor != address(0x0);
         bool FlagDuration = _duration >= 15;
+        bool FlagImageID = _imageID > 0;
+        contractRelease=Release(releaseAddress);
         // require(_purchaser != address(0x0), "invalid purchaser address");
         // require(_imageOwner != address(0x0), "invalid image owner address");
         // require(_imageAuthor != address(0x0), "invalid image author address");
-        // require(bytes(_SHA3).length != 0, "invalid sha3");
-        // require(_duration >= 15, "time too short");
-        contractRelease = Release(releaseAddress);
-
-        bool FlagImageID = _imageID > 0 && _imageID <= contractRelease.imageCount();
-
-        FlagOwner = FlagOwner && _imageOwner == contractRelease.getImageOwner(_imageID);
-        FlagAuthor = FlagAuthor && _imageAuthor == contractRelease.getImageAuthor(_imageID);
+        // require(_purchaser != address(0x0), "invalid purchaser address");
         // require(_imageID > 0 && _imageID <= contractRelease.imageCount(), "invalid image ID");
-        // require(_imageOwner == contractRelease.getImageOwner(_imageID), "wrong owner");
-        // require(_imageAuthor == contractRelease.getImageAuthor(_imageID), "wrong author");
+        // require(_imageOwner != address(0x0) && _imageOwner == contractRelease.getImageOwner(_imageID), "invalid owner");
+        // require(_imageAuthor != address(0x0) && _imageAuthor == contractRelease.getImageAuthor(_imageID), "invalid author");
+        // require(_duration >= 15, "time too short");
+        FlagImageID = FlagImageID && ( _imageID <= contractRelease.imageCount());
+        FlagOwner = FlagOwner && (_imageOwner == contractRelease.getImageOwner(_imageID));
+        FlagAuthor = FlagAuthor && (_imageAuthor == contractRelease.getImageAuthor(_imageID));
         
         //use one require to save gas
-        require(FlagImageID && FlagOwner && FlagAuthor && FlagPurchaser && FlagDuration);
-
+        require(FlagImageID && FlagOwner && FlagAuthor && FlagPurchaser && FlagDuration, "invalid parameters");
+        
         imageID = _imageID;
         purchaser = _purchaser;
         imageOwner = _imageOwner;

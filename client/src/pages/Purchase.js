@@ -2,10 +2,14 @@ import React from "react";
 import { Card, Container } from "react-bootstrap";
 import CardHeader from "react-bootstrap/esm/CardHeader";
 
+import { newPurchase } from "../http/purchase";
+
 import AccountInfo from "../components/AccountInfo";
 
 //web3
 import { web3Context } from '../context/web3Context';
+import ContractPurchase from '../abis/Purchase.json'
+import ContractRelease from "../abis/Release.json";
 //Footer
 import Footer from "../components/Footer";
 
@@ -20,14 +24,20 @@ class Purchase extends React.Component{
   constructor(props) {
     super(props)
     this.state = {
-      image:''
+      netID: 0,
+      image: '',
+      imageID:3,
+      imageAuthor: "0x9aEB35aa6EE18cDe040E3903B6aec935619D75cB",
+      imageOwner: "0x9aEB35aa6EE18cDe040E3903B6aec935619D75cB",
     }
   }
 
   componentDidMount = () => {
+    const id = this.props.location.id
     const idx = Math.floor(Math.random() * 43)
     const img = testImages[idx]
-    console.log(idx)
+    // console.log(id)
+    // console.log(idx)
     const image = {
       account: '',
       web3: null,
@@ -35,11 +45,11 @@ class Purchase extends React.Component{
       imgID: 0,
       image: img,
       title: "there is no title",
-      author: "0x40651eEDCE5812ae0263BecAC7B179716925c041",
-      owner: "0x40651eEDCE5812ae0263BecAC7B179716925c041"
+      author: this.state.imageAuthor,
+      owner: this.state.imageOwner
     }
-    console.log(this.props.match.params.imgID)
-    this.setState({imgID: this.props.match.params.imgID})
+    // console.log(this.props.match.params.imgID)
+    // this.setState({imgID: this.props.match.params.imgID})
     this.setState({image: image })
     // console.log(this.state.image)  
     const account = this.context.account
@@ -48,9 +58,16 @@ class Purchase extends React.Component{
     this.setState({web3})
     // let balance = this.context.balance
     // this.setState({balance})
+
+    // console.log("balance = "+balance)
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
-      console.log("[update]"+balance)
+      console.log("[purchase]"+balance)
+    })
+
+    web3.eth.net.getId().then((netID) => {
+      this.setState({netID})
+      // console.log(netID)
     })
     
     window.ethereum.on('accountsChanged', (account) => {
@@ -65,6 +82,54 @@ class Purchase extends React.Component{
         console.log("[update]"+balance)
       })
     });
+  }
+
+  handlePurchaseSumbit = (event) => {
+    event.preventDefault()
+    const web3 = this.context.web3;
+    let offerAmount = this.offerAmount.value
+
+    offerAmount = web3.utils.toWei(offerAmount, 'Ether')
+
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi,{gasPrice:10000,gasLimit:8000000})
+    
+    const releaseNetworkData = ContractRelease.networks[this.state.netID]
+    const releaseAddress = releaseNetworkData.address
+    console.log("release addr = " + releaseAddress)
+    const imageID = 3;
+    const imageOwner = this.state.imageOwner;
+    const imageAuthor = this.state.imageAuthor
+    const purchaser = this.state.account;
+
+    let address = null;
+    contractInstance.deploy({
+      data: ContractPurchase.bytecode,
+      arguments: [releaseAddress,imageID,purchaser,imageOwner,imageAuthor,3600],
+    }).send({from: purchaser, value:offerAmount })
+    .then((newContractInstance) => {
+      const address = newContractInstance.options.address
+      const contract = new web3.eth.Contract(ContractPurchase.abi, address)
+      console.log(address)
+      contract.methods.launchTime().call().then((launchTime) => {
+        console.log(launchTime)
+
+        let obj = {
+          contractAddress: address,
+          purchaser: purchaser,
+          imageOwner: imageOwner,
+          imageAuthor: imageAuthor,
+          imageID:imageID,
+          offer: offerAmount,
+          launchTime: launchTime,
+          duration: 3600
+        }
+        newPurchase(obj, true).then((res) => {
+          if (res.suceess){
+            console.log(res.message)
+          }
+        })
+      })
+    })
   }
 
   render() {
@@ -106,19 +171,20 @@ class Purchase extends React.Component{
           <div className="row g-4">
             <div className="col-md-7 col-lg-7 ">
             <h4 className="mb-3">Buy this!</h4>
-            <form>
+            <form onSubmit={this.handlePurchaseSumbit}>
               <div className="row g-5">
                 <div class="col-12">
                   <div className="row g-3">
                     <div className="col-sm-10" style={{ paddingTop:"0"}}>
-                      <input type="number" id="imageTipAmount"
+                      <input type="number" id="offerAmount"
                           min="0" max="99" step="0.000001"
                           className="form-control rounded"
                           required placeholder="input your offer"
+                          ref={(input) => {this.offerAmount = input}}
                       /> 
                     </div>
                     <div className="col-sm-2 " style={{ display:"inline-block",verticalAlign:"middle" }}>
-                      <h5 className="py-2">Ξ ETH</h5>
+                      <h5 className="py-2">ΞETH</h5>
                     </div>
                   </div>
                 </div>

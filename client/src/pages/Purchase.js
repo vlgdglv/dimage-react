@@ -100,11 +100,12 @@ class Purchase extends React.Component{
     const imageOwner = this.state.imageOwner;
     const imageAuthor = this.state.imageAuthor
     const purchaser = this.state.account;
+    const sha3 = "0x5d663a51e6a9748e1abff82c9097f69b568040fd87c1be7e162acb5059de9794";
 
     let address = null;
     contractInstance.deploy({
       data: ContractPurchase.bytecode,
-      arguments: [releaseAddress,imageID,purchaser,imageOwner,imageAuthor,3600],
+      arguments: [releaseAddress,imageID,purchaser,imageOwner,imageAuthor,3600, sha3],
     }).send({from: purchaser, value:offerAmount })
     .then((newContractInstance) => {
       const address = newContractInstance.options.address

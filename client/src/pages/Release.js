@@ -8,10 +8,11 @@ import ContractRelease from '../abis/Release.json'
 // import {Router, useHistory } from 'react-router-dom';
 // const Release = () => <h1 style={{ paddingTop:"150px" }}>Releasing</h1>;
 //http
-import { releaseImage, uploadImage } from "../http/release";
+import { releaseImage, uploadImage,getImageBySHA } from "../http/release";
 //components
 import Footer from "../components/Footer";
 import AccountInfo from "../components/AccountInfo";
+import MyAlert from "../components/MyAlert";
 
 const watermark = require('watermarkjs')
 
@@ -35,6 +36,11 @@ class Release extends React.Component{
       balance: '',
       web3:null,
       release: null,
+
+      loading:false,
+      show:false,
+      type:'',
+      message:'',
     }
   }
 
@@ -43,14 +49,17 @@ class Release extends React.Component{
 
     this.loadBlockchainData().then(()=>{
       console.log("block chain data loaded")
+      this.state.release.methods.imageCount().call().then((tmpImgID)=>{
+        this.setState({ imgID: parseInt(tmpImgID)+1 }) 
+        console.log(this.state.imgID)
+      })
     })
 
     let account = this.context.account
     this.setState({account})
     let web3 = this.context.web3
     this.setState({web3})
-    // let balance = this.context.balance
-    // this.setState({balance})
+
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
       console.log("[update]"+balance)
@@ -78,9 +87,7 @@ class Release extends React.Component{
     if (releaseNetworkData) {
       const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
       this.setState({ release })
-      const tmpImgID = await release.methods.imageCount().call()
-      this.setState({ imgID: parseInt(tmpImgID)+1 }) 
-      console.log(this.state.imgID)
+
     }
   }
 
@@ -113,12 +120,9 @@ class Release extends React.Component{
     event.preventDefault()
     const web3 = this.context.web3
     this.setState({imgTitle: this.imgTitle.value})
-    // thumbnail test
-    // this.uploadThumbnail(this.state.imgFile, this.state.sha3).then((res) => {
-    //   console.log(res)
-    // })
-    // ****************************************************************
-    //request for signature
+    this.setState({loading: true})
+    console.log("imageID" + this.state.imgID)
+
     web3.eth.sign(this.state.sha3, this.state.account)
     .then((result)=>{
       console.log(result)
@@ -131,7 +135,7 @@ class Release extends React.Component{
       const sign = this.state.sign;
       const title = this.state.imgTitle;
       this.state.release.methods
-      .uploadImage(hash, sha3, sign, title)
+      .uploadImage(hash, sha3, sign)
       .send({from: this.state.account})
       .on('transactionHash', (txHash) => {
         console.log(txHash)
@@ -147,14 +151,30 @@ class Release extends React.Component{
               title: this.state.imgTitle,
               thumbnailPath: res.data.thumbnailPath
             }
+            // console.log(imageData)
             //post image info to database
             releaseImage(imageData, true).then((res)=>{
-              console.log("post info:" + res)
+              this.setState({loading: false})
+              if (res.success) {
+                this.setState({imgID : this.state.imgID+1})
+                this.popAlert("success", "Release successfully! You can check it in your profile/Creation page")
+              }else{
+                this.popAlert("danger", res.message)
+              }
+            }).catch((err) => {
+              this.setState({loading: false})
+              this.popAlert("danger",err)
             })
+          }else{
+            this.setState({loading: false})
+            this.popAlert("danger", res.message)
           }
         }).catch((err) => {
-          console.log(err)
+          this.setState({loading: false})
+          this.popAlert("danger",err)
         })
+      }).then((res) => {
+        console.log(res.status)
       })
     })
   }
@@ -164,9 +184,9 @@ class Release extends React.Component{
     const wmText = '@' + this.state.account;
     //generate watermark
     return watermark([image])
-    .blob(watermark.text.lowerRight(wmText, '32px Josefin Slab', '#000',0.6))
+    .blob(watermark.text.lowerRight(wmText, '80px Josefin Slab', '#000',0.6))
     .render()
-    .blob(watermark.text.upperLeft(wmText, '32px Josefin Slab', '#fff',0.6,32))
+    .blob(watermark.text.upperLeft(wmText, '80px Josefin Slab', '#fff',0.6,80))
     .then((img) => {
       // console.log(img)
       const imgFile = new File([img], image.name)
@@ -174,17 +194,32 @@ class Release extends React.Component{
       formData.append("file", imgFile)
       formData.append("sha3", sha3)
       return uploadImage(formData, true)
+    }).catch((err) => {
+      this.setState({loading: false})
+      this.popAlert("danger", err)
     })
+  }
+
+  popAlert = (type,message) => {
+    this.setState({type})
+    this.setState({message})
+    this.setState({show:true})
+  }
+
+  closeAlert = () => { 
+    this.setState({show:false})
   }
 
   render(){
     return(
       // <h1 style={{ paddingTop:"150px" }}>Releasing</h1>
       <Container>
+
         <main>
           <div className="text-center py-5">
             <h2 style={{ paddingTop:"80px" }}>Release your work!</h2>
           </div>
+          
           <div className="row g-5 ">
             <div className="col-md-5 col-lg-5 order-md-last" style={{ padding:"auto"  }}>
               <AccountInfo account={this.state.account} balance={this.state.balance}/>
@@ -240,6 +275,23 @@ class Release extends React.Component{
                     >Upload!</button>
                 </div>
               </form>
+              <div style={{ marginTop:"20px"}}>
+              {
+                
+                  this.state.loading ?
+                  <div class="d-flex justify-content-center">
+                    <div class="spinner-border text-primary" role="status">
+                      <span class="visually-hidden">Loading...</span>
+                    </div>
+                  </div>
+                  :
+                  <MyAlert 
+                    show={this.state.show} 
+                    message={this.state.message} 
+                    type={this.state.type}
+                    closeAlert={this.closeAlert}/> 
+                }
+              </div>
             </div>
           </div>
         </main>
@@ -248,6 +300,5 @@ class Release extends React.Component{
     )
   }
 }
-
 
 export default Release;

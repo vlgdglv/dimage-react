@@ -6,24 +6,24 @@ contract Release{
     string public contractName;
     uint public imageCount = 0;
     mapping(uint => Image) public images;
-  
+    mapping(bytes32 => uint8) public released;
     
     struct Image {
         uint id;
-        string hash;
-        string sha3;
-        string signature;
-        string title;
+        uint timestamp;
+        bytes32 sha3;
+        bytes signature;
+        string ipfsHash;
         address payable author;
         address payable owner;
     }
 
     event ImageCreated(
         uint id,
-        string hash,
-        string sha3,
-        string signature,
-        string title,
+        uint timestamp,
+        bytes32 sha3,
+        bytes signature,
+        string ipfsHash,
         address payable author,
         address payable owner
     );
@@ -33,32 +33,34 @@ contract Release{
     }
     
     function uploadImage(
-        string memory _imgHash,
-        string memory _imgSHA3, 
-        string memory _imgSign,
-        string memory _title) public {
-
+        string memory _ipfsHash,
+        bytes32       _imgSHA3, 
+        bytes  memory _imgSign
+        ) public {
         //check requires
-        require(bytes(_imgHash).length > 0);
-        require(bytes(_imgSHA3).length > 0);
-        require(bytes(_imgSign).length > 0);
-        require(bytes(_title).length > 0);
+        require(bytes(_ipfsHash).length > 0);
+        require(_imgSHA3.length > 0);
+        require(_imgSign.length > 0);
         require(msg.sender != address(0x0));
+        require(released[_imgSHA3] == 0, "already exist!");
 
+        uint time = block.timestamp;
         imageCount++;
         images[imageCount] = Image(
             imageCount,
-            _imgHash,
+            time,
             _imgSHA3,
             _imgSign,
-            _title, 
+            _ipfsHash,
             payable(msg.sender),payable(msg.sender));
+        released[_imgSHA3] = 1;
+
         emit ImageCreated(
             imageCount,
-            _imgHash,
+            time,
             _imgSHA3,
             _imgSign,
-            _title, 
+            _ipfsHash,
             payable(msg.sender), payable(msg.sender));
     }
 
@@ -79,9 +81,9 @@ contract Release{
         images[_id].owner = newOwner;
     }
 
-    function changeSign(uint _id, string memory newSign) public{
+    function changeSign(uint _id, bytes memory newSign) public{
       require(_id > 0 && _id <= imageCount );
-      require(bytes(newSign).length > 0);
+      require(newSign.length > 0);
       //get image data
       Image memory _image = images[_id];
       //get Owner's address
@@ -102,14 +104,12 @@ contract Release{
       return images[imageID].author;
     }
 
-    function isSHA3Match(uint imageID, string memory testSHA3) public view returns(bool) {
+    function isSHA3Match(uint imageID, bytes32 testSHA3) public view returns(bool) {
       require(imageID > 0 && imageID <= imageCount );
-      string memory SHA3 = images[imageID].sha3;
-      if (bytes(SHA3).length != bytes(testSHA3).length) {
-          return false;
-      } else {
-          return keccak256(bytes(testSHA3)) == keccak256(bytes(SHA3));
-      }
+      bytes memory SHA3 = abi.encodePacked(images[imageID].sha3);
+      bytes memory tester = abi.encodePacked(testSHA3);
+      return keccak256(tester) == keccak256(SHA3);
+      
     }
 
     

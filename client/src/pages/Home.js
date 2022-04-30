@@ -22,6 +22,9 @@ class Home extends React.Component{
   componentDidMount = () => {
     testImages.sort(() => {return Math.random() - 0.5})
     let images = testImages.slice(0,15)
+
+    
+
     images = images.map((image, index) => {
       // imageThumbnail(image, imageOptions).then((data) => {
       //   return{

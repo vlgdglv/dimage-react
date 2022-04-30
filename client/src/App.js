@@ -101,7 +101,8 @@ class App extends Component {
               </Switch>
             </web3Context.Provider>  
           </BrowserRouter>
-        : <h2 style={{ paddingTop:"150px", textAlign:"center" }} > Loading Web3, account, and contract... </h2>
+        :<div></div>
+        // : <h2 style={{ paddingTop:"150px", textAlign:"center" }} > Loading Web3, account, and contract... </h2>
         }
       </div>
     );

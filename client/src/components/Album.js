@@ -76,7 +76,6 @@ class Album extends React.Component {
       </Container>
     )
   }
-
 }
 
 export default withRouter(Album);

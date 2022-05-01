@@ -26,9 +26,9 @@ const MyAlert = (props) => {
     )
   }
 }
-MyAlert.PropTypes = {
-  type: PropTypes.oneOf(['success','danger','warning','info']),
-  show: PropTypes.bool,
-  message: PropTypes.string,
-} 
+// MyAlert.PropTypes = {
+//   type: PropTypes.oneOf(['success','danger','warning','info']),
+//   show: PropTypes.bool,
+//   message: PropTypes.string,
+// } 
 export default MyAlert;

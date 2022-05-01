@@ -121,64 +121,89 @@ class Release extends React.Component{
     const web3 = this.context.web3
     this.setState({imgTitle: this.imgTitle.value})
     this.setState({loading: true})
-    console.log("imageID" + this.state.imgID)
+    console.log("imageID=" + this.state.imgID)
 
-    web3.eth.sign(this.state.sha3, this.state.account)
+    const author = this.state.account
+
+    web3.eth.sign(this.state.sha3, author)
     .then((result)=>{
       console.log(result)
       this.setState({sign:result})
-    })
-    //write image info to ethereum
-    .then(() =>{
-      const hash = "hash"; //TODO: later will be IPFS hash
-      const sha3 = this.state.sha3;
-      const sign = this.state.sign;
-      const title = this.state.imgTitle;
-      this.state.release.methods
-      .uploadImage(hash, sha3, sign)
-      .send({from: this.state.account})
-      .on('transactionHash', (txHash) => {
-        console.log(txHash)
-        //upload image thumbnail with watermark
-        this.uploadThumbnail(this.state.imgFile, this.state.sha3).then((res)=>{
-          if(res.success) {
-            const imageData = {
-              imgID: this.state.imgID,
-              author: this.state.account,
-              hash: "IPFS hash",
-              sha3: this.state.sha3,
-              signature: this.state.sign,
-              title: this.state.imgTitle,
-              thumbnailPath: res.data.thumbnailPath
+
+      this.uploadThumbnail(this.state.imgFile,this.state.sha3).then((res)=>{
+        if (res.success) {
+          const hash = "IPFS hash"; //TODO: later will be IPFS hash
+          const imgID = this.state.imgID;
+          const sha3 = this.state.sha3;
+          const sign = this.state.sign;
+          const title = this.state.imgTitle
+          const imageData = {
+            imgID: this.state.imgID,
+            author: this.state.account,
+            hash: hash, 
+            sha3: this.state.sha3,
+            signature: this.state.sign,
+            title:  this.state.imgTitle,
+            thumbnailPath: res.data.thumbnailPath
+          } 
+          this.state.release.methods.uploadImage(hash, sha3, sign)
+          .send({from: author})
+          .then((res) => {
+            console.log(res)
+            if (res.status) {
+              releaseImage(imageData, true).then((res)=>{
+                this.setState({loading: false})
+                if (res.success) {
+                  this.setState({imgID : this.state.imgID+1})
+                  this.popAlert("success", "Release successfully! You can check it in your profile/Creation page")
+                }else {
+                  this.popAlert("danger", res.message)
+                }
+                
+              })
+            }else {
+              this.setState({loading: false})
+              this.popAlert("danger","something wrong with blockchain")
             }
-            // console.log(imageData)
-            //post image info to database
-            releaseImage(imageData, true).then((res)=>{
-              this.setState({loading: false})
-              if (res.success) {
-                this.setState({imgID : this.state.imgID+1})
-                this.popAlert("success", "Release successfully! You can check it in your profile/Creation page")
-              }else{
-                this.popAlert("danger", res.message)
-              }
-            }).catch((err) => {
-              this.setState({loading: false})
-              this.popAlert("danger",err)
-            })
-          }else{
+          })
+          .catch((err) => {
             this.setState({loading: false})
-            this.popAlert("danger", res.message)
-          }
-        }).catch((err) => {
+            this.popAlert("danger",err.message)
+          })
+        }else {
           this.setState({loading: false})
-          this.popAlert("danger",err)
-        })
-      }).then((res) => {
-        console.log(res.status)
+          this.popAlert("danger", res.message)
+        }
       })
+    }) 
+    .catch((err)=>{ 
+      console.log("nmsl")
+      this.setState({loading: false})
+      this.popAlert("danger", err.message)
     })
   }
   
+  releaseToChainAndDB = (imageData) => {
+    const hash = imageData.hash
+    const sha3 = imageData.sha3
+    const sign = imageData.signature
+    this.state.release.methods.uploadImage(hash, sha3, sign)
+    .send({from: this.state.account})
+    .on((res) => {
+      console.log(res)
+      if (res.status) {
+        return releaseImage(imageData, true)
+      }else {
+        this.setState({loading: false})
+        this.popAlert("danger","something wrong with blockchain")
+      }
+    })
+    .catch('error',(err) => {
+      this.setState({loading: false})
+      this.popAlert("danger",err)
+    })
+  }
+
   uploadThumbnail = (image, sha3) => {
     console.log(image)
     const wmText = '@' + this.state.account;
@@ -237,7 +262,7 @@ class Release extends React.Component{
                   <h5 className="my-3">Upload your work</h5>
                   <div style={{ textAlign:"center"}}>
                     <input className="form-control-file"
-                      type="file" id="imageFile" 
+                      type="file" id="imageFile" required
                       accept=".jpgm, .jpeg, .png, .bpm, .gif, .jpg"
                       onChange={this.captureFile}/>
                   </div>
@@ -279,9 +304,10 @@ class Release extends React.Component{
               {
                 
                   this.state.loading ?
-                  <div class="d-flex justify-content-center">
-                    <div class="spinner-border text-primary" role="status">
-                      <span class="visually-hidden">Loading...</span>
+                  <div class="d-flex align-items-center justify-content-center">
+                    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                    <div className="mx-1 text-primary">
+                      <strong >Continue your operation in MetaMask...</strong>
                     </div>
                   </div>
                   :

@@ -96,11 +96,11 @@ class Purchase extends React.Component{
     const releaseNetworkData = ContractRelease.networks[this.state.netID]
     const releaseAddress = releaseNetworkData.address
     console.log("release addr = " + releaseAddress)
-    const imageID = 3;
+    const imageID = 2;
     const imageOwner = this.state.imageOwner;
     const imageAuthor = this.state.imageAuthor
     const purchaser = this.state.account;
-    const sha3 = "0x5d663a51e6a9748e1abff82c9097f69b568040fd87c1be7e162acb5059de9794";
+    const sha3 = "0x30f31556837b6521fe07275e6b6a33801e4eeb33dec9e79344e848ccc24ccc61";
 
     let address = null;
     contractInstance.deploy({
@@ -119,6 +119,7 @@ class Purchase extends React.Component{
           purchaser: purchaser,
           imageOwner: imageOwner,
           imageAuthor: imageAuthor,
+          sha3:sha3,
           imageID:imageID,
           offer: offerAmount,
           launchTime: launchTime,
@@ -155,7 +156,7 @@ class Purchase extends React.Component{
           </Card>
           <hr></hr>
           <div className="row g-4">
-            <div className="col-md-6 col-lg-6 ">
+            <div className="col-md-6 col-lg-6">
               <div className="border rounded  my-5" style={{ marginBottom:"auto" }}>  
                   <h5 className="my-3 text-center" style={{ color:"#008B45"}}>Author &amp; Owner</h5>
                   <h5 className="mx-3">Author</h5>

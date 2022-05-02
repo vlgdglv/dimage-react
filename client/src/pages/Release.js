@@ -44,9 +44,7 @@ class Release extends React.Component{
     }
   }
 
-
   componentDidMount() {
-
     this.loadBlockchainData().then(()=>{
       console.log("block chain data loaded")
       this.state.release.methods.imageCount().call().then((tmpImgID)=>{

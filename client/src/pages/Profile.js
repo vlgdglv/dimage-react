@@ -74,15 +74,16 @@ class Profile extends React.Component {
           <button className="nav-link link-dark" id="v-pills-possession-tab" data-bs-toggle="pill" data-bs-target="#v-pills-possession" type="button" role="tab" aria-controls="v-pills-possession" aria-selected="false">Possession</button>
           {/* <button className="nav-link link-dark" id="v-pills-trades-tab" data-bs-toggle="pill" data-bs-target="#v-pills-trades" type="button" role="tab" aria-controls="v-pills-trades" aria-selected="false">Trades</button> */}
         </div>
+      </div>
+      
+      <div className="tab-content" id="v-pills-tabContent" style={{ minWidth:"calc(100vw - 250px)"}}>
+        <div className="tab-pane fade show active" id="v-pills-overview" role="tabpanel" aria-labelledby="v-pills-overview-tab">
+          <Overview account={this.state.account} balance={this.state.balance}/>
         </div>
-        <div className="tab-content" id="v-pills-tabContent" style={{ minWidth:"calc(100vw - 250px)"}}>
-          <div className="tab-pane fade show active" id="v-pills-overview" role="tabpanel" aria-labelledby="v-pills-overview-tab">
-            <Overview account={this.state.account} balance={this.state.balance}/>
-          </div>
-          <div className="tab-pane fade" id="v-pills-creation" role="tabpanel" aria-labelledby="v-pills-creation-tab"><Creation/></div>
-          <div className="tab-pane fade" id="v-pills-possession" role="tabpanel" aria-labelledby="v-pills-possession-tab"><Possession/></div>
-          {/* <div className="tab-pane fade" id="v-pills-trades" role="tabpanel" aria-labelledby="v-pills-trades-tab"><Trades/></div> */}
-        </div>
+        <div className="tab-pane fade" id="v-pills-creation" role="tabpanel" aria-labelledby="v-pills-creation-tab"><Creation/></div>
+        <div className="tab-pane fade" id="v-pills-possession" role="tabpanel" aria-labelledby="v-pills-possession-tab"><Possession/></div>
+        {/* <div className="tab-pane fade" id="v-pills-trades" role="tabpanel" aria-labelledby="v-pills-trades-tab"><Trades/></div> */}
+      </div>
     </main>    
   )
 }  

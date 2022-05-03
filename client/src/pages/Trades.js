@@ -68,6 +68,7 @@ class Trades extends React.Component {
       state:state
     }).then((res) => {
       if (res.success) {
+        console.log(res)
         let data = res.data
         let offers = data.ptxList
         offers.map((each) => {
@@ -242,7 +243,6 @@ class Trades extends React.Component {
     // })
   }
 
-
   handleSign = (event) => {
     event.preventDefault()
     // console.log(event.target.id)
@@ -290,14 +290,12 @@ class Trades extends React.Component {
 
     return (
       <main className="d-flex">
-        
         <Modals confirmModal="confirmModal" declineModal="declineModal" 
                 cancelModal="cancelModal" signModal="signModal"
                 onTx = {this.state.onTx} onIdx = {this.state.onIdx}
                 handleConfirm={this.handleConfirm} handleDecline={this.handleDecline}
                 handleCancel={this.handleCancel}  handleSign={this.handleSign} 
           />
-
         <div className="nav d-flex nav-pills flex-column flex-shrink-0  bg-light" 
           style={{width: "250px", minHeight:"calc(100vh - 50px)", marginTop:"50px"}}
           id="v-pills-tab" role="tablist" aria-orientation="vertical"
@@ -351,8 +349,7 @@ class Trades extends React.Component {
                     <span class="visually-hidden">Loading...</span>
                   </div>
                 </div>
-              :
-              
+              :     
               <Container className="py-2 ">
               <MyPagination
                 totPages={this.state.offerPage.totPages}
@@ -364,7 +361,7 @@ class Trades extends React.Component {
                   :this.state.offers.map((offer, key) => {
                     let opGroup = <div><h5><span class="badge bg-primary">State</span></h5></div>
                     let timeGroup = <div></div>
-                    if (offer.isClosed == 1){
+                    if (offer.isClosed == 1 && this.state.offerFilterState ==-3){
                       opGroup = <div><h5><span class="badge bg-warning text-dark">Expired</span></h5></div>
                     }else if (offer.state == 1) {
                       opGroup=( 
@@ -387,7 +384,7 @@ class Trades extends React.Component {
                       opGroup = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
                     }else if (offer.state == -2){
                       opGroup = <div><h5><span class="badge bg-dark">Cancelled</span></h5></div>
-                    }
+                    } 
                     return(
                       <main>
                       <div class="card m-3">
@@ -421,10 +418,8 @@ class Trades extends React.Component {
               }
             </Container>
           </div>
-          
           <div  className="tab-pane fade" id="v-pills-launches" role="tabpanel" aria-labelledby="v-pills-launches-tab">
-            <Container style={{ maxWidth:"70%"}}>
-              
+            <Container style={{ maxWidth:"70%"}}>  
               {/* My launch */}
               <div className="d-flex justify-content-between">
               <h1 style={{ paddingTop:"76px" }}>Launched by me</h1>
@@ -434,7 +429,7 @@ class Trades extends React.Component {
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
                       <Dropdown.Item onClick={()=>{
-                          this.setState({launchFilterState:1});
+                          this.setState({launchFilterState:2});
                           this.getPurchaserTx(this.context.account,1,4,2)}}>Sign</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:1});
@@ -479,7 +474,7 @@ class Trades extends React.Component {
                         </div>
                       )
                   let timeGroup = <div></div> 
-                  if (offer.isClosed == 1){
+                  if (offer.isClosed == 1 && this.state.launchFilterState == -3){
                     opGroup = <div><h5><span class="badge bg-warning text-dark">Expired</span></h5></div>
                   }else if (offer.state == 1) {
                     opGroup=( 

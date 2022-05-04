@@ -86,9 +86,15 @@ contract Purchase {
         
         if (tsfOwnerFlag && tsfAuthorFlag) {
           contractRelease.changeOwner(imageID, payable(purchaser));
+          //double check
+          if (contractRelease.getImageOwner(imageID) != purchaser) {
+            isClosed = false;
+            revert();
+          }
           emit transferComplete(imageID, purchaser, imageOwner);
         } else{
           isClosed = false;
+          revert();
         }
     }
 
@@ -111,6 +117,7 @@ contract Purchase {
       }else {
         emit transferFailed(imageID,address(this), purchaser);
         isClosed = false;
+        revert();
       }
     }
 
@@ -131,6 +138,7 @@ contract Purchase {
       }else {
         emit transferFailed(imageID, address(this), purchaser);
         isClosed = false;
+        revert();
       }
     }
 

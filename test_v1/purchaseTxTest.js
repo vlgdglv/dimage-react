@@ -1,8 +1,8 @@
 const { assert } = require('chai');
 
 // const Purchase = artifacts.require('./Purchase.sol')
-const Purchase = require( '../client/src/abis/Purchase2.json');
-const Release = artifacts.require('./Release2.sol')
+const Purchase = require( '../client/src/abis/Purchase.json');
+const Release = artifacts.require('./Release.sol')
 
 require('chai').use(require('chai-as-promised')).should()
 
@@ -15,8 +15,8 @@ contract('Purchase transaction: make first deal test ', ([deployer, purchaser, o
   beforeEach(async() => {
     release = await Release.deployed()
     releaseAddress = await release.address;
-    await release.uploadImage("as", '0x1234','0xdef',{from: owner})
-    await release.uploadImage("sa", '0x5678','0xabc',{from: owner})
+    await release.uploadImage("as", 'sha3','signature from author', 'Image title',{from: owner})
+    await release.uploadImage("sa", '3ahs','erutangis from author', 'Egami eltit',{from: owner})
     //deploy a Purchase instance before every describe
     //purchaser balance before deployment
     originPurchaseBalance = BigInt(await web3.eth.getBalance(purchaser))
@@ -27,7 +27,7 @@ contract('Purchase transaction: make first deal test ', ([deployer, purchaser, o
     })
     const result = await instance.deploy({
       data: Purchase.bytecode,
-      arguments:[releaseAddress, 1, purchaser, owner, owner, 360, "0x1234"],
+      arguments:[releaseAddress, 1, purchaser, owner, owner, 360],
     }).send({from:purchaser, value: offer})
     address = result.options.address
     //calc deploy contract gas fee
@@ -72,125 +72,125 @@ contract('Purchase transaction: make first deal test ', ([deployer, purchaser, o
   })
 })
 
-// contract('Purchase transaction: decline purchase test ', ([deployer, purchaser, owner, author, nobody])=>{
-//   const gasLimit = 30000000
-//   const offer = 2000000000000000;
-//   let instance, address;
-//   let originPurchaseBalance;
-//   let deployGasFee;
-//   let release,releaseAddress;
+contract('Purchase transaction: decline purchase test ', ([deployer, purchaser, owner, author, nobody])=>{
+  const gasLimit = 30000000
+  const offer = 2000000000000000;
+  let instance, address;
+  let originPurchaseBalance;
+  let deployGasFee;
+  let release,releaseAddress;
 
-//   beforeEach(async() => {
-//     release = await Release.deployed()
-//     releaseAddress = await release.address;
-//     await release.uploadImage("as", '0x1234','0xdef',{from: owner})
-//     await release.uploadImage("sa", '0x5678','0xabc',{from: owner})
-//     //deploy a Purchase instance before every describe
-//     //purchaser balance before deployment
-//     originPurchaseBalance = BigInt(await web3.eth.getBalance(purchaser))
-//     //new an instance and deploy it
-//     instance = new web3.eth.Contract(Purchase.abi,{
-//       // gasPrice:20000,
-//       gasLimit:gasLimit
-//     })
-//     const result = await instance.deploy({
-//       data: Purchase.bytecode,
-//       arguments:[releaseAddress, 1, purchaser, owner, owner, 360, "0x1234"],
-//     }).send({from:purchaser, value: offer})
-//     address = result.options.address
-//     //calc deploy contract gas fee
-//     const afterB = BigInt(await web3.eth.getBalance(purchaser))
-//     deployGasFee = originPurchaseBalance - afterB - BigInt(offer)
-//     // console.log("[LOG] deployGasFee = " + deployGasFee)
-//   })
+  beforeEach(async() => {
+    release = await Release.deployed()
+    releaseAddress = await release.address;
+    await release.uploadImage("as", 'sha3','signature from author', 'Image title',{from: owner})
+    await release.uploadImage("sa", '3ahs','erutangis from author', 'Egami eltit',{from: owner})
+    //deploy a Purchase instance before every describe
+    //purchaser balance before deployment
+    originPurchaseBalance = BigInt(await web3.eth.getBalance(purchaser))
+    //new an instance and deploy it
+    instance = new web3.eth.Contract(Purchase.abi,{
+      // gasPrice:20000,
+      gasLimit:gasLimit
+    })
+    const result = await instance.deploy({
+      data: Purchase.bytecode,
+      arguments:[releaseAddress, 1, purchaser, owner, owner, 360],
+    }).send({from:purchaser, value: offer})
+    address = result.options.address
+    //calc deploy contract gas fee
+    const afterB = BigInt(await web3.eth.getBalance(purchaser))
+    deployGasFee = originPurchaseBalance - afterB - BigInt(offer)
+    // console.log("[LOG] deployGasFee = " + deployGasFee)
+  })
   
-//   describe('transactions check:', async() => {
-//     it('decline purchase', async() => {
-//       const contract = new web3.eth.Contract(Purchase.abi, address)
-//       //before balances
-//       const ownerOldBalance = BigInt(await web3.eth.getBalance(owner))
-//       const authorOldBalance =Number(await web3.eth.getBalance(author))
-//       //decline this purchase by owner
-//       const result = await contract.methods.declinePurchase().send({ from: owner, value: 200000 })
-//       //decline gas fee, pay by owner (who declines)
-//       const gasUsed = parseInt(result.gasUsed)
-//       const effectiveGasPrice = parseInt(web3.utils.toBN(result.effectiveGasPrice))
-//       const declineGasFee = BigInt(gasUsed * effectiveGasPrice)
-//       //after balances
-//       const purchaserNewBalance = Number(await web3.eth.getBalance(purchaser))
-//       const ownerNewBalance = Number(await web3.eth.getBalance(owner))
-//       const authorNewBalance = Number(await web3.eth.getBalance(author))
+  describe('transactions check:', async() => {
+    it('decline purchase', async() => {
+      const contract = new web3.eth.Contract(Purchase.abi, address)
+      //before balances
+      const ownerOldBalance = BigInt(await web3.eth.getBalance(owner))
+      const authorOldBalance =Number(await web3.eth.getBalance(author))
+      //decline this purchase by owner
+      const result = await contract.methods.declinePurchase().send({ from: owner, value: 200000 })
+      //decline gas fee, pay by owner (who declines)
+      const gasUsed = parseInt(result.gasUsed)
+      const effectiveGasPrice = parseInt(web3.utils.toBN(result.effectiveGasPrice))
+      const declineGasFee = BigInt(gasUsed * effectiveGasPrice)
+      //after balances
+      const purchaserNewBalance = Number(await web3.eth.getBalance(purchaser))
+      const ownerNewBalance = Number(await web3.eth.getBalance(owner))
+      const authorNewBalance = Number(await web3.eth.getBalance(author))
 
-//       //author should not be affected
-//       assert.equal(authorOldBalance,authorNewBalance,"author right")
-//       //owner should only lose decline operation gas fee
-//       const ownerBalanceShould = Number(BigInt(ownerOldBalance) - declineGasFee)
-//       assert.closeTo(ownerNewBalance, ownerBalanceShould, 10e5, "owner get right")
-//       //purchaser should only lose Purchase contract deployment gas fee
-//       const purchaseBalanceShould = Number(originPurchaseBalance - deployGasFee)
-//       assert.closeTo(purchaserNewBalance, purchaseBalanceShould, 10e5, "purchase right")      
-//     })
-//   })
-// })
+      //author should not be affected
+      assert.equal(authorOldBalance,authorNewBalance,"author right")
+      //owner should only lose decline operation gas fee
+      const ownerBalanceShould = Number(BigInt(ownerOldBalance) - declineGasFee)
+      assert.closeTo(ownerNewBalance, ownerBalanceShould, 10e5, "owner get right")
+      //purchaser should only lose Purchase contract deployment gas fee
+      const purchaseBalanceShould = Number(originPurchaseBalance - deployGasFee)
+      assert.closeTo(purchaserNewBalance, purchaseBalanceShould, 10e5, "purchase right")      
+    })
+  })
+})
 
-// contract('Purchase transaction: cancel purchase test', ([deployer, purchaser, owner, author, nobody])=>{
-//   const gasLimit = 30000000
-//   const offer = 2000000000000000;
-//   let instance, address;
-//   let originPurchaseBalance;
-//   let deployGasFee;
-//   let release,releaseAddress;
-//   beforeEach(async() => {
-//     release = await Release.deployed()
-//     releaseAddress = await release.address;
-//     await release.uploadImage("as", '0x1234','0xdef',{from: owner})
-//     await release.uploadImage("sa", '0x5678','0xabc',{from: owner})
-//     //deploy a Purchase instance before every describe
-//     //purchaser balance before deployment
-//     originPurchaseBalance = BigInt(await web3.eth.getBalance(purchaser))
-//     //new an instance and deploy it
-//     instance = new web3.eth.Contract(Purchase.abi,{
-//       // gasPrice:20000,
-//       gasLimit:gasLimit
-//     })
-//     const result = await instance.deploy({
-//       data: Purchase.bytecode,
-//       arguments:[releaseAddress, 1, purchaser, owner, owner, 360, "0x1234"],
-//     }).send({from:purchaser, value: offer})
-//     address = result.options.address
-//     //calc deploy contract gas fee
-//     const afterB = BigInt(await web3.eth.getBalance(purchaser))
-//     deployGasFee = originPurchaseBalance - afterB - BigInt(offer)
-//     // console.log("[LOG] deployGasFee = " + deployGasFee)
-//   })
-//   describe('transactions check:', async() => {
-//     it('cancel purchase', async() => {
-//       const contract = new web3.eth.Contract(Purchase.abi, address)
-//       //before balances
-//       const ownerOldBalance = Number(await web3.eth.getBalance(owner))
-//       const authorOldBalance =Number(await web3.eth.getBalance(author))
+contract('Purchase transaction: cancel purchase test', ([deployer, purchaser, owner, author, nobody])=>{
+  const gasLimit = 30000000
+  const offer = 2000000000000000;
+  let instance, address;
+  let originPurchaseBalance;
+  let deployGasFee;
+  let release,releaseAddress;
+  beforeEach(async() => {
+    release = await Release.deployed()
+    releaseAddress = await release.address;
+    await release.uploadImage("as", 'sha3','signature from author', 'Image title',{from: owner})
+    await release.uploadImage("sa", '3ahs','erutangis from author', 'Egami eltit',{from: owner})
+    //deploy a Purchase instance before every describe
+    //purchaser balance before deployment
+    originPurchaseBalance = BigInt(await web3.eth.getBalance(purchaser))
+    //new an instance and deploy it
+    instance = new web3.eth.Contract(Purchase.abi,{
+      // gasPrice:20000,
+      gasLimit:gasLimit
+    })
+    const result = await instance.deploy({
+      data: Purchase.bytecode,
+      arguments:[releaseAddress, 1, purchaser, owner, owner, 360],
+    }).send({from:purchaser, value: offer})
+    address = result.options.address
+    //calc deploy contract gas fee
+    const afterB = BigInt(await web3.eth.getBalance(purchaser))
+    deployGasFee = originPurchaseBalance - afterB - BigInt(offer)
+    // console.log("[LOG] deployGasFee = " + deployGasFee)
+  })
+  describe('transactions check:', async() => {
+    it('cancel purchase', async() => {
+      const contract = new web3.eth.Contract(Purchase.abi, address)
+      //before balances
+      const ownerOldBalance = Number(await web3.eth.getBalance(owner))
+      const authorOldBalance =Number(await web3.eth.getBalance(author))
   
-//       //cancel purchase by purchaser
-//       const result = await contract.methods.cancelPurchase().send({ from: purchaser, value: 200000 })
-//       //cancel gas fee, pay by purchaser (who cancels)
-//       const gasUsed = parseInt(result.gasUsed)
-//       const effectiveGasPrice = parseInt(web3.utils.toBN(result.effectiveGasPrice))
-//       const cancelGasFee = BigInt(gasUsed * effectiveGasPrice)
+      //cancel purchase by purchaser
+      const result = await contract.methods.cancelPurchase().send({ from: purchaser, value: 200000 })
+      //cancel gas fee, pay by purchaser (who cancels)
+      const gasUsed = parseInt(result.gasUsed)
+      const effectiveGasPrice = parseInt(web3.utils.toBN(result.effectiveGasPrice))
+      const cancelGasFee = BigInt(gasUsed * effectiveGasPrice)
 
-//       //after balances
-//       const purchaserNewBalance = Number(await web3.eth.getBalance(purchaser))
-//       const ownerNewBalance = Number(await web3.eth.getBalance(owner))
-//       const authorNewBalance = Number(await web3.eth.getBalance(author))
+      //after balances
+      const purchaserNewBalance = Number(await web3.eth.getBalance(purchaser))
+      const ownerNewBalance = Number(await web3.eth.getBalance(owner))
+      const authorNewBalance = Number(await web3.eth.getBalance(author))
       
-//       //owner and author should not be affected
-//       assert.equal(ownerOldBalance,ownerNewBalance,"author right")  
-//       assert.equal(authorOldBalance,authorNewBalance,"author right")
-//       //purchaser should only lost deploy and cancel gas fee
-//       const purchaseBalanceShould = Number(originPurchaseBalance - deployGasFee - cancelGasFee)
-//       assert.closeTo(purchaserNewBalance, purchaseBalanceShould, 10e5, "purchase right")
-//     })
-//   })
-// })
+      //owner and author should not be affected
+      assert.equal(ownerOldBalance,ownerNewBalance,"author right")  
+      assert.equal(authorOldBalance,authorNewBalance,"author right")
+      //purchaser should only lost deploy and cancel gas fee
+      const purchaseBalanceShould = Number(originPurchaseBalance - deployGasFee - cancelGasFee)
+      assert.closeTo(purchaserNewBalance, purchaseBalanceShould, 10e5, "purchase right")
+    })
+  })
+})
 
 // seems truffle test wouldn't provide enough gas
 // contract('Purchase transaction: successive purchase test', ([purchaser, owner, author, nobody])=>{

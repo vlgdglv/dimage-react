@@ -107,7 +107,7 @@ contract Purchase {
       // require(msg.sender == imageOwner, "Who are you?");  
       // require(isClosed == false, "already done");
       // require(contractRelease.getImageOwner(imageID) == imageOwner, "");
-      
+
       require(FlagTimestamp && FlagTxOrigin && FlagOwner && !isClosed);
 
       isClosed = true;
@@ -124,6 +124,10 @@ contract Purchase {
     function cancelPurchase() public payable {
       
       bool FlagTxOrigin = msg.sender == purchaser;
+      
+      /*why I cancel this restriction?
+        let's assume malicous owner A sees this offer  
+      */
       bool FlagOwner = contractRelease.getImageOwner(imageID) == imageOwner;
 
       // require(msg.sender == purchaser, "you cannot cancel this");
@@ -141,8 +145,4 @@ contract Purchase {
         revert();
       }
     }
-
-    // function callTest() public payable {
-    //   contractRelease.changeOwner(imageID, payable(purchaser));
-    // }
 }

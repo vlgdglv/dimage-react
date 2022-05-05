@@ -1,6 +1,6 @@
 const { assert } = require('chai')
 
-const Release = artifacts.require('./Release2.sol')
+const Release = artifacts.require('./Release.sol')
 
 require('chai').use(require('chai-as-promised')).should()
 

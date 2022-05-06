@@ -11,7 +11,7 @@ contract Release2{
     struct Image {
         uint id;
         uint timestamp;
-        uint txCount;
+        uint32 txCount;
 
         bytes32 sha3;
         bytes signature;
@@ -60,7 +60,7 @@ contract Release2{
             _ipfsHash,
             payable(msg.sender),
             payable(msg.sender),
-            new address[](6)
+            new address[](5)
             );
 
         released[_imgSHA3] = 1;
@@ -82,7 +82,7 @@ contract Release2{
         address oldOwner = images[_id].owner;
         bool FlagID = _id > 0 && _id <= imageCount;
         bool FlagOldOwner = (tx.origin ==  oldOwner);
-        bool FlagNewOwner = (newOwner != images[_id].owner) && (newOwner != address(0x0));
+        bool FlagNewOwner = (newOwner != oldOwner) && (newOwner != address(0x0));
         // if (_id <= 0 || _id > imageCount) return;    
         // if (tx.origin != images[_id].owner) return;
         // if (newOwner == images[_id].owner) return;
@@ -92,20 +92,22 @@ contract Release2{
 
         images[_id].owner = newOwner;
         
-        address[] memory prevOwnerTemp = images[_id].prevOwners;
-        for (uint i = prevOwnerTemp.length-1; i>0 ; i--) {
+
+        for (uint i=4; i>0 ; i--) {
           images[_id].prevOwners[i] = images[_id].prevOwners[i-1]; 
         }
         images[_id].prevOwners[0] = oldOwner;
     }
 
     function incTxCount(uint _id) public {
+      require(_id > 0 && _id <= imageCount);
       require(tx.origin == images[_id].owner);
-      images[_id].txCount++;
+
+      images[_id].txCount = images[_id].txCount+1;
     }
 
     function getTxCount(uint _id) public view returns(uint){
-      require(tx.origin == images[_id].owner);
+      require(_id > 0 && _id <= imageCount);
       return images[_id].txCount;
     }
 

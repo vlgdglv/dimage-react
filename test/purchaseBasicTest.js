@@ -16,6 +16,9 @@ contract('Purchase basics', ([deployer,purchaser, owner, author, nobody]) => {
   let release,releaseAddress;
 
   beforeEach(async() => {
+    let block = await web3.eth.getBlock("latest");
+    console.log(block);
+    
     release = await Release.deployed()
     releaseAddress = await release.address;
     await release.uploadImage("as", '0x1234','0xdef',{from: owner})
@@ -26,18 +29,20 @@ contract('Purchase basics', ([deployer,purchaser, owner, author, nobody]) => {
     //new an instance and deploy it
     instance = new web3.eth.Contract(Purchase.abi,{
       // gasPrice:20000,
-      gasLimit:gasLimit
+      gasLimit:gasLimit,
+      // gasPrice: 2000
     })
     // console.log(instance)
     const result = await instance.deploy({
       data: Purchase.bytecode,
       arguments:[releaseAddress, 1, purchaser, owner, owner ,360, "0x1234"],
     }).send({ from:purchaser, value: offer})
-    // console.log(result)
+    // console.log(result.options.data)
     address = result.options.address
     //calc deploy contract gas fee
     const afterB = BigInt(await web3.eth.getBalance(purchaser))
     deployGasFee = originPurchaseBalance - afterB - BigInt(offer)
+    console.log('deploy gas = ' + deployGasFee )
   })
   
   describe('run time deployment',async()=>{

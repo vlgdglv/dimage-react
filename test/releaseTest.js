@@ -92,5 +92,22 @@ contract('Release',([deployer, author, buyer]) => {
       result = await release.isSHA3Match(1, sha2)
       console.log(result)
     })
+
+    it('test txCount', async() => {
+
+      const btxCount = await release.getTxCount(1);
+      
+      // console.log(await release.images(1))
+      assert.equal(btxCount,0,"before tx count right")   
+      
+      const  change =  await release.incTxCount(1, {from:buyer});   
+
+      // console.log(await release.images(1))
+
+      const atxCount = await release.getTxCount(1);
+      
+      // console.log(atxCount)
+      assert.equal(atxCount,1,"after tx count right")      
+    })
   })
 })

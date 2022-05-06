@@ -54,7 +54,11 @@ contract Purchase2 {
         // require(_imageAuthor != address(0x0) && _imageAuthor == contractRelease.getImageAuthor(_imageID), "invalid author");
         // require(_duration >= 15, "time too short");
         FlagImageID = FlagImageID && ( _imageID <= contractRelease.imageCount());
-        FlagOwner = FlagOwner && (_imageOwner == contractRelease.getImageOwner(_imageID));
+        address oldOwner = contractRelease.getImageOwner(_imageID);
+        FlagOwner = FlagOwner && (_imageOwner == oldOwner);
+        // FlagOwner = FlagOwner && (_imageOwner == contractRelease.getImageOwner(_imageID));
+        
+        FlagPurchaser = FlagPurchaser && (_purchaser != oldOwner);
         FlagAuthor = FlagAuthor && (_imageAuthor == contractRelease.getImageAuthor(_imageID));
         FlagSHA3 = FlagSHA3 && contractRelease.isSHA3Match(_imageID, _SHA3);
         //use one require to save gas
@@ -70,8 +74,7 @@ contract Purchase2 {
         amount = msg.value;
         
         prevOwners = contractRelease.getPrevOwner(_imageID);
-        // imageTxCount = contractRelease.getTxCount(imageID);
-        // calShares();
+        imageTxCount = contractRelease.getTxCount(imageID);
 
         emit purchaseLaunched(_imageID, _purchaser, _imageOwner, _imageAuthor, amount);
     }
@@ -83,19 +86,37 @@ contract Purchase2 {
         // if (tx.origin != imageOwner;) return;
         // if (isClosed) return;
 
-        require(FlagTimestamp && FlagTxOrigin && !isClosed);
+        require(FlagTimestamp && FlagTxOrigin );
         
         isClosed = true;
 
-        // calShares();
-
-
+        if (imageTxCount <= 10) {
+          authorShare = amount / 5;
+        }else if(imageTxCount <= 50) {
+          authorShare = amount / 10;
+        }else {
+          authorShare = amount / 20;
+        }
 
         bool flag = true;
-        for(uint i=0; i<5; i++) {
-          flag = flag && payable(prevOwners[i]).send(2);
+        uint prevShareSum = 0;
+        uint prevShare = 0;
+        for(uint i=0; i<prevOwners.length; i++) {
+          if (prevOwners[i] != address(0x0)) {
+            prevShare = amount / 100 * (5-i);
+            flag = flag && payable(prevOwners[i]).send(prevShare);
+            prevShareSum += prevShare;
+          }
         }
-        if ( imageAuthor.send(authorShare) == false || imageOwner.send(ownerShare) == false || !flag) {
+
+        ownerShare = amount - authorShare - prevShareSum;
+
+
+        if ( imageAuthor.send(authorShare) && imageOwner.send(ownerShare) && flag) {
+          contractRelease.incTxCount(imageID);
+          contractRelease.changeOwner(imageID, payable(purchaser));
+          require(purchaser == contractRelease.getImageOwner(imageID));
+        }else{
           revert();
         }
     }

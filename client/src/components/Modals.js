@@ -35,9 +35,14 @@ class Modals extends React.Component{
                   <p style={{marginBottom:"0"}} className="text-primary">{this.props.onTx.purchaser}</p>
                   <hr></hr>
                   <div className="d-flex align-items-end flex-column">
+                    {/* changes need to be made */}
                     <div>
                     <span>Author's Share : </span>
                     <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.offer*0.1).toFixed(6)} ETH</span>
+                    </div>
+                    <div>
+                      <span>Disseminator's reward: </span>
+                      <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.offer*0.15).toFixed(6)} ETH</span>
                     </div>
                     <div>
                       <span>Your Share : </span>

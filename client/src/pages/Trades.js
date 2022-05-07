@@ -379,7 +379,10 @@ class Trades extends React.Component {
                           </div>)  
 
                     }else if (offer.state == 0 || offer.state == 2){
-                      opGroup = <div><h5><span class="badge bg-success">Success</span></h5></div>
+                      opGroup = <div className="d-flex align-items-end flex-column">  
+                                  <h5><span class="badge bg-success">Success</span></h5>
+                                  <h6><span class="badge bg-success">5%</span></h6>
+                                </div>
                     }else if (offer.state == -1){
                       opGroup = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
                     }else if (offer.state == -2){
@@ -539,5 +542,4 @@ class Trades extends React.Component {
     )
   }
 }
-
 export default Trades;

@@ -1,6 +1,6 @@
 const { assert } = require('chai')
 
-const Release = artifacts.require('./Release2.sol')
+const Release = artifacts.require('./Release.sol')
 
 require('chai').use(require('chai-as-promised')).should()
 
@@ -83,8 +83,6 @@ contract('Release',([deployer, author, buyer]) => {
     })
 
     it('test sha3 match', async() => {
-      const sha = await release.images(1)
-      console.log(sha)
       let result = await release.isSHA3Match(1,sha1)
       console.log(result)
       result = await release.isSHA3Match(2, sha2)
@@ -94,18 +92,12 @@ contract('Release',([deployer, author, buyer]) => {
     })
 
     it('test txCount', async() => {
-
       const btxCount = await release.getTxCount(1);
-      
       // console.log(await release.images(1))
       assert.equal(btxCount,0,"before tx count right")   
-      
       const  change =  await release.incTxCount(1, {from:buyer});   
-
       // console.log(await release.images(1))
-
-      const atxCount = await release.getTxCount(1);
-      
+      const atxCount = await release.getTxCount(1);    
       // console.log(atxCount)
       assert.equal(atxCount,1,"after tx count right")      
     })

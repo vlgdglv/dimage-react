@@ -1,10 +1,11 @@
 import React from "react";
-import { Card, Container } from "react-bootstrap";
+import { Card, Container, Form } from "react-bootstrap";
 import CardHeader from "react-bootstrap/esm/CardHeader";
 
 import { newPurchase } from "../http/purchase";
 
 import AccountInfo from "../components/AccountInfo";
+import { getThumbnail } from "../http/image";
 
 //web3
 import { web3Context } from '../context/web3Context';
@@ -29,6 +30,20 @@ class Purchase extends React.Component{
       imageID:3,
       imageAuthor: "0x9aEB35aa6EE18cDe040E3903B6aec935619D75cB",
       imageOwner: "0x9aEB35aa6EE18cDe040E3903B6aec935619D75cB",
+      imgSrc:'',
+      release:'',
+      txCount:0,
+    }
+  }
+
+  async loadBlockchainData() {
+    const web3 = this.context.web3
+    const networkId = await web3.eth.net.getId()
+    const releaseNetworkData = ContractRelease.networks[networkId]
+    if (releaseNetworkData) {
+      const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
+      this.setState({ release })
+      const txCount = await release.methods.getTxCount().call()
     }
   }
 
@@ -82,6 +97,8 @@ class Purchase extends React.Component{
         console.log("[update]"+balance)
       })
     });
+
+    this.handleImageSrc()
   }
 
   handlePurchaseSumbit = (event) => {
@@ -134,6 +151,18 @@ class Purchase extends React.Component{
     })
   }
 
+  handleImageSrc = () => {
+    let formData = new FormData()
+    let path = "D:\\Fun\\proj12\\Dimage-back\\dimage\\target\\classes\\upload\\20220501\\0xfaac5b85809aead81ded90b7652bd74d1d8d0d03cdd9b21e08e995c6e9873da3.JPG"
+    formData.append("path", path)
+    getThumbnail( formData ).then((res) => {
+      let blob  = new Blob([res])
+      let url = URL.createObjectURL(blob);
+      this.setState({imgSrc:url})
+      console.log(res)
+    })
+  }
+
   render() {
     return (
       <Container>
@@ -149,7 +178,7 @@ class Purchase extends React.Component{
             </div>
             </CardHeader>
             <img className="img-responsive center-block rounded" 
-              src= {this.state.image.image }
+              src= { this.state.imgSrc }
               alt="No Thumbnail"
               style={{ maxWidth:"100%" }}
             />

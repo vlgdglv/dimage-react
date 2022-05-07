@@ -1,13 +1,12 @@
 const { assert } = require('chai');
 
 // const Purchase = artifacts.require('./Purchase.sol')
-const Purchase = require( '../client/src/abis/Purchase2.json');
-const Release = artifacts.require('./Release2.sol')
+const Purchase = require( '../client/src/abis/Purchase.json');
+const Release = artifacts.require('./Release.sol')
 
 require('chai').use(require('chai-as-promised')).should()
 
-contract('Purchase transaction: double purchase test', ([owner,buyer1,buyer2,buyer3,buyer4,buyer5,
-                                                                        buyer6,buyer7,buyer8,buyer9,buyer0])=>{
+contract('Purchase transaction: double purchase test', ([owner,buyer1,buyer2,buyer3,buyer4,buyer5,buyer6,buyer7,buyer8,buyer9])=>{
 
   const gasLimit = 30000000
   const offer = 1000000000000000;
@@ -16,17 +15,14 @@ contract('Purchase transaction: double purchase test', ([owner,buyer1,buyer2,buy
   let deployGasFee;
   let release,releaseAddress;
 
-
   describe('combo', async() => {
-
     before(async() => {
       release = await Release.deployed()
       releaseAddress = await release.address;
       await release.uploadImage("as", '0x1234','0xdef',{from: owner})
       await release.uploadImage("sa", '0x5678','0xabc',{from: owner})
       console.log("release addr = " + releaseAddress)
-    })
-  
+    })  
     it('1 tx', async() => {
       instance = new web3.eth.Contract(Purchase.abi,{
         gasLimit:gasLimit,
@@ -198,6 +194,7 @@ contract('Purchase transaction: double purchase test', ([owner,buyer1,buyer2,buy
         console.log("PO"+i+" = "+await contract.methods.prevOwners(i).call())
       }
       result = await contract.methods.confirmPurchase().send({ from: buyer9 ,gasLimit:350000})
+      console.log("tx 10 author reward:" + await contract.methods.authorShare().call())
     })
     it('11 tx', async() => {
       instance = new web3.eth.Contract(Purchase.abi,{
@@ -233,7 +230,6 @@ contract('Purchase transaction: double purchase test', ([owner,buyer1,buyer2,buy
       }
       result = await contract.methods.confirmPurchase().send({ from: buyer2 ,gasLimit:350000})
     })
-
     it('final check', async() => {
       instance = new web3.eth.Contract(Purchase.abi,{
         gasLimit:gasLimit,
@@ -288,10 +284,8 @@ contract('Purchase transaction: double purchase test', ([owner,buyer1,buyer2,buy
 
       console.log("Buyer4 begin:" + by4)
       console.log("Buyer4 after deploy:" + by4ad)
-      console.log("Buyer4 after all:" + by4)
+      console.log("Buyer4 after all:" + by4a)
 
     })
-    
   })
-
 })

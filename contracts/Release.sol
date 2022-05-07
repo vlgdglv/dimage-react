@@ -11,11 +11,16 @@ contract Release{
     struct Image {
         uint id;
         uint timestamp;
+        uint32 txCount;
+
         bytes32 sha3;
         bytes signature;
         string ipfsHash;
+        
         address payable author;
         address payable owner;
+
+        address[] prevOwners;
     }
 
     event ImageCreated(
@@ -49,10 +54,15 @@ contract Release{
         images[imageCount] = Image(
             imageCount,
             time,
+            0,
             _imgSHA3,
             _imgSign,
             _ipfsHash,
-            payable(msg.sender),payable(msg.sender));
+            payable(msg.sender),
+            payable(msg.sender),
+            new address[](5)
+            );
+
         released[_imgSHA3] = 1;
 
         emit ImageCreated(
@@ -69,29 +79,47 @@ contract Release{
         address payable newOwner
         ) public {
         
+        address oldOwner = images[_id].owner;
         bool FlagID = _id > 0 && _id <= imageCount;
-        bool FlagOldOwner = tx.origin == images[_id].owner;
-        bool FlagNewOwner = newOwner != images[_id].owner && newOwner != address(0x0);
+        bool FlagOldOwner = (tx.origin ==  oldOwner);
+        bool FlagNewOwner = (newOwner != oldOwner) && (newOwner != address(0x0));
         // if (_id <= 0 || _id > imageCount) return;    
         // if (tx.origin != images[_id].owner) return;
         // if (newOwner == images[_id].owner) return;
         // if (newOwner == address(0x0)) return;
+
         require(FlagID && FlagOldOwner && FlagNewOwner);
 
         images[_id].owner = newOwner;
+        
+        for (uint i=4; i>0 ; i--) {
+          images[_id].prevOwners[i] = images[_id].prevOwners[i-1]; 
+        }
+        images[_id].prevOwners[0] = oldOwner;
     }
 
-    function changeSign(uint _id, bytes memory newSign) public{
-      require(_id > 0 && _id <= imageCount );
+    function incTxCount(uint imageID) public {
+      require(imageID > 0 && imageID <= imageCount);
+      require(tx.origin == images[imageID].owner);
+      images[imageID].txCount = images[imageID].txCount+1;
+    }
+
+    function getTxCount(uint imageID) public view returns(uint){
+      require(imageID > 0 && imageID <= imageCount);
+      return images[imageID].txCount;
+    }
+
+    function changeSign(uint imageID, bytes memory newSign) public{
+      require(imageID > 0 && imageID <= imageCount );
       require(newSign.length > 0);
       //get image data
-      Image memory _image = images[_id];
+      Image memory _image = images[imageID];
       //get Owner's address
       address _owner = _image.owner;
       require(msg.sender == _owner);
 
       _image.signature = newSign;
-      images[_id] = _image;
+      images[imageID] = _image;
     } 
 
     function getImageOwner(uint imageID) public view returns(address) {
@@ -104,13 +132,15 @@ contract Release{
       return images[imageID].author;
     }
 
+    function getPrevOwner(uint imageID) public view returns(address[] memory) {
+      require(imageID > 0 && imageID <= imageCount );
+      return images[imageID].prevOwners;
+    }
+
     function isSHA3Match(uint imageID, bytes32 testSHA3) public view returns(bool) {
       require(imageID > 0 && imageID <= imageCount );
       bytes memory SHA3 = abi.encodePacked(images[imageID].sha3);
       bytes memory tester = abi.encodePacked(testSHA3);
-      return keccak256(tester) == keccak256(SHA3);
-      
+      return keccak256(tester) == keccak256(SHA3); 
     }
-
-    
 }

@@ -1,4 +1,4 @@
-var Release = artifacts.require("./Release2.sol");
+var Release = artifacts.require("./Release.sol");
 var Verification = artifacts.require("./Verification.sol");
 
 module.exports = function(deployer) {

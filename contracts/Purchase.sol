@@ -18,6 +18,9 @@ contract Purchase {
     bool    public isClosed = false;
     uint    public authorShare;
     uint    public ownerShare;
+    address[] public prevOwners;
+    uint[]  public prevOwnerShare;
+    uint    public imageTxCount;
 
     event purchaseLaunched(uint imageID,address purchaser, address imageOwner, address imageAuthor, uint amount);
     event transferComplete(uint imageID,address purchaser, address imageOwner);
@@ -51,7 +54,11 @@ contract Purchase {
         // require(_imageAuthor != address(0x0) && _imageAuthor == contractRelease.getImageAuthor(_imageID), "invalid author");
         // require(_duration >= 15, "time too short");
         FlagImageID = FlagImageID && ( _imageID <= contractRelease.imageCount());
-        FlagOwner = FlagOwner && (_imageOwner == contractRelease.getImageOwner(_imageID));
+        address oldOwner = contractRelease.getImageOwner(_imageID);
+        FlagOwner = FlagOwner && (_imageOwner == oldOwner);
+        // FlagOwner = FlagOwner && (_imageOwner == contractRelease.getImageOwner(_imageID));
+        
+        FlagPurchaser = FlagPurchaser && (_purchaser != oldOwner);
         FlagAuthor = FlagAuthor && (_imageAuthor == contractRelease.getImageAuthor(_imageID));
         FlagSHA3 = FlagSHA3 && contractRelease.isSHA3Match(_imageID, _SHA3);
         //use one require to save gas
@@ -65,8 +72,10 @@ contract Purchase {
         launchTime = block.timestamp;
         endTime = launchTime + _duration;
         amount = msg.value;
-        authorShare = amount / 10 ;
-        ownerShare = amount - authorShare;
+        SHA3 = _SHA3;
+        prevOwners = contractRelease.getPrevOwner(_imageID);
+        imageTxCount = contractRelease.getTxCount(imageID);
+        calShares();
         emit purchaseLaunched(_imageID, _purchaser, _imageOwner, _imageAuthor, amount);
     }
 
@@ -77,26 +86,45 @@ contract Purchase {
         // if (tx.origin != imageOwner;) return;
         // if (isClosed) return;
 
-        require(FlagTimestamp && FlagTxOrigin && !isClosed);
+        require(FlagTimestamp && FlagTxOrigin );
         
         isClosed = true;
-    
-        bool tsfOwnerFlag =  (payable(imageOwner)).send(ownerShare);
-        bool tsfAuthorFlag = (payable(imageAuthor)).send(authorShare);
-        
-        if (tsfOwnerFlag && tsfAuthorFlag) {
-          contractRelease.changeOwner(imageID, payable(purchaser));
-          //double check
-          if (contractRelease.getImageOwner(imageID) != purchaser) {
-            isClosed = false;
-            revert();
+
+        bool flag = true;
+        for(uint i=0; i<prevOwners.length; i++) {
+          if (prevOwners[i] != address(0x0)) {
+            flag = flag && payable(prevOwners[i]).send(prevOwnerShare[i]);
           }
-          emit transferComplete(imageID, purchaser, imageOwner);
-        } else{
-          isClosed = false;
+        }
+
+        if ( imageAuthor.send(authorShare) && imageOwner.send(ownerShare) && flag) {
+          contractRelease.incTxCount(imageID);
+          contractRelease.changeOwner(imageID, payable(purchaser));
+          require(purchaser == contractRelease.getImageOwner(imageID));
+        }else{
           revert();
         }
     }
+
+    function calShares()  private {
+      if (imageTxCount <= 10) {
+        authorShare = amount / 5;
+      }else if(imageTxCount <= 50) {
+        authorShare = amount / 10;
+      }else {
+        authorShare = amount / 20;
+      }
+      uint prevShareSum = 0;
+      prevOwnerShare = new uint[](5);
+      for(uint i=0; i<prevOwners.length; i++) {
+        if (prevOwners[i] != address(0x0)) {
+          prevOwnerShare[i] = amount / 100 * (5-i);
+          prevShareSum += prevOwnerShare[i];
+        }
+      }
+      ownerShare = amount - authorShare - prevShareSum;
+    }
+
 
     function declinePurchase() public payable {
         
@@ -126,14 +154,13 @@ contract Purchase {
       bool FlagTxOrigin = msg.sender == purchaser;
       
       /*why I cancel this restriction?
-        let's assume malicous owner A sees this offer  
       */
-      bool FlagOwner = contractRelease.getImageOwner(imageID) == imageOwner;
+      // bool FlagOwner = contractRelease.getImageOwner(imageID) == imageOwner;
 
       // require(msg.sender == purchaser, "you cannot cancel this");
       // require(isClosed == false, "already done");
       // require(contractRelease.getImageOwner(imageID) == imageOwner, "");
-      require( FlagTxOrigin && FlagOwner && !isClosed);
+      require( FlagTxOrigin && !isClosed);
 
       isClosed = true;
 

@@ -12,10 +12,10 @@ const MyAlert = (props) => {
       header = "Success"
     }
     return (
-      <Alert transition="true"
+      <Alert transition={true}
         style={{ maxWidth:"80%"}} variant={props.type} onClose={props.closeAlert} dismissible>
         <Alert.Heading>{header}</Alert.Heading>
-        <p>
+        <p className="text-truncate align-middle">
           { props.message }
         </p>
       </Alert>

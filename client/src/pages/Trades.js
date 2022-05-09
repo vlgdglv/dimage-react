@@ -15,6 +15,7 @@ import Modals from "../components/Modals";
 
 const requireContext = require.context("../pics", true, /^\.\/.*\.png$/);
 const testImages = requireContext.keys().map(requireContext);
+
 const moment = require('moment')
 class Trades extends React.Component {
 
@@ -24,6 +25,7 @@ class Trades extends React.Component {
     super(props)
     this.state = {
       account:'',
+      balance:'',
       offers:[],
       loadOffer: true,
       offerPage:{
@@ -72,7 +74,10 @@ class Trades extends React.Component {
         let data = res.data
         let offers = data.ptxList
         offers.map((each) => {
-          each.offer = this.context.web3.utils.fromWei(each.offer)
+          const web3 = this.context.web3
+          each.offer = web3.utils.fromWei(each.offer)
+          each.authorShare = web3.utils.fromWei(each.authorShare)
+          each.ownerShare = web3.utils.fromWei(each.ownerShare)
         })
         this.setState({offerPage:{totPages:data.totalPages,currentPage:curPage}})
         this.setState({offers: offers})
@@ -93,7 +98,10 @@ class Trades extends React.Component {
         let data = res.data
         let launches = data.ptxList
         launches.map((each) => {
-          each.offer = this.context.web3.utils.fromWei(each.offer)
+          const web3 = this.context.web3
+          each.offer = web3.utils.fromWei(each.offer)
+          each.authorShare = web3.utils.fromWei(each.authorShare)
+          each.ownerShare = web3.utils.fromWei(each.ownerShare)
         })
         console.log(data.totalPages)
         this.setState({launchPage:{totPages:data.totalPages,currentPage:curPage}})
@@ -107,6 +115,8 @@ class Trades extends React.Component {
     testImages.sort(() => {return Math.random() - 0.5})
     let images = testImages.slice(0,8)
     this.setState({images})
+    const account = this.context.account
+    this.setState({account})
 
     window.ethereum.on('accountsChanged', (account) => {
       console.log("[trade]change account:"+account)
@@ -114,12 +124,12 @@ class Trades extends React.Component {
       if (account === '') {
         this.props.history.push('/error')
       }
-      
       this.setState({account})
+      window.location.reload()
     });
     
-    this.getOwnerTx(this.context.account,1,4);
-    this.getPurchaserTx(this.context.account,1,4);
+    this.getOwnerTx(account,1,4);
+    this.getPurchaserTx(account,1,4);
   }
 
   handleConfirm = (event) => {
@@ -279,11 +289,11 @@ class Trades extends React.Component {
   }
   
   handleOfferPageChange = (ele) => {
-    this.getOwnerTx(this.context.account, ele, 4 ,this.state.offerFilterState);
+    this.getOwnerTx(this.state.account, ele, 4 ,this.state.offerFilterState);
   }
 
   handleLaunchPageChange = (ele) => {
-    this.getPurchaserTx(this.context.account, ele,4, this.state.launchFilterState);
+    this.getPurchaserTx(this.state.account, ele,4, this.state.launchFilterState);
   }
 
   render() {
@@ -327,19 +337,19 @@ class Trades extends React.Component {
                   <Dropdown.Menu>
                     <Dropdown.Item onClick={()=>{
                         this.setState({offerFilterState:1});
-                        this.getOwnerTx(this.context.account,1,4,1)}}>Pending</Dropdown.Item>
+                        this.getOwnerTx(this.state.account,1,4,1)}}>Pending</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
                         this.setState({offerFilterState:0});
-                        this.getOwnerTx(this.context.account,1,4,0)}}>Success</Dropdown.Item>
+                        this.getOwnerTx(this.state.account,1,4,0)}}>Success</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
                         this.setState({offerFilterState:-1});
-                        this.getOwnerTx(this.context.account,1,4,-1)}}>Declined</Dropdown.Item>
+                        this.getOwnerTx(this.state.account,1,4,-1)}}>Declined</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
                         this.setState({offerFilterState:-2});
-                        this.getOwnerTx(this.context.account,1,4,-2)}}>Cancelled</Dropdown.Item>
+                        this.getOwnerTx(this.state.account,1,4,-2)}}>Cancelled</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
                         this.setState({offerFilterState:-3});
-                        this.getOwnerTx(this.context.account,1,4,-3)}}>Expired</Dropdown.Item>
+                        this.getOwnerTx(this.state.account,1,4,-3)}}>Expired</Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
               </div>
@@ -381,7 +391,8 @@ class Trades extends React.Component {
                     }else if (offer.state == 0 || offer.state == 2){
                       opGroup = <div className="d-flex align-items-end flex-column">  
                                   <h5><span class="badge bg-success">Success</span></h5>
-                                  <h6><span class="badge bg-success">5%</span></h6>
+                                  { offer.prevOwnerShareRatio==0? <div></div>:
+                                  <h6><span class="badge bg-info">passive share:{offer.prevOwnerShareRatio}%</span></h6>}
                                 </div>
                     }else if (offer.state == -1){
                       opGroup = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
@@ -433,22 +444,22 @@ class Trades extends React.Component {
                     <Dropdown.Menu>
                       <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:2});
-                          this.getPurchaserTx(this.context.account,1,4,2)}}>Sign</Dropdown.Item>
+                          this.getPurchaserTx(this.state.account,1,4,2)}}>Sign</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:1});
-                          this.getPurchaserTx(this.context.account,1,4,1)}}>Pending</Dropdown.Item>
+                          this.getPurchaserTx(this.state.account,1,4,1)}}>Pending</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:0});
-                          this.getPurchaserTx(this.context.account,1,4,0)}}>Success</Dropdown.Item>
+                          this.getPurchaserTx(this.state.account,1,4,0)}}>Success</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:-1});
-                          this.getPurchaserTx(this.context.account,1,4,-1)}}>Declined</Dropdown.Item>
+                          this.getPurchaserTx(this.state.account,1,4,-1)}}>Declined</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:-2});
-                          this.getPurchaserTx(this.context.account,1,4,-2)}}>Cancelled</Dropdown.Item>
+                          this.getPurchaserTx(this.state.account,1,4,-2)}}>Cancelled</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:-3});
-                          this.getPurchaserTx(this.context.account,1,4,-3)}}>Expired</Dropdown.Item>
+                          this.getPurchaserTx(this.state.account,1,4,-3)}}>Expired</Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
                 </div>

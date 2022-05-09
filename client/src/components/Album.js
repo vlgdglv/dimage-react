@@ -2,6 +2,7 @@ import React from "react";
 import { Container } from "react-bootstrap";
 import { withRouter } from "react-router";
 
+import { altPic } from '../altImage.png'
 import  MyPagination  from '../components/MyPagination'
 
 class Album extends React.Component {
@@ -9,10 +10,12 @@ class Album extends React.Component {
     super(props)
     this.state = {
       images: [],
-      totalPage:0,
+      totalPages:0,
       currentPage: 0,
     }
   }
+
+
 
   handlePurchase = (event) => {
     event.preventDefault()
@@ -43,9 +46,9 @@ class Album extends React.Component {
                     <div className="bd-placeholder-img card-img-top " role="img" preserveAspectRatio="xMidYMid slice" focusable="false">
                       <div className="thumbnail">
                         <a style={{ cursor:"pointer" }} key={key}>
-                        <img  className="img-responsive rounded" 
+                        <img  className="img-responsive rounded" alt={altPic}
                           style={{ width:"100%", height:"300px", objectFit:"cover"}} 
-                          src={image.image} 
+                          src={altPic} 
                           />
                           </a>
                       </div>

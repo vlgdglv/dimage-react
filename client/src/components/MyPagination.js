@@ -8,6 +8,9 @@ const MyPagination = (props) => {
   useEffect(() => {
     let totPages = parseInt(props.totPages);
     let currentPage = parseInt(props.currentPage);
+    // console.log("Pagination: total pages = " + totPages)
+    // console.log("Pagination: current page= " + currentPage)
+
     let pageArr = [];
     if (totPages > 1) {
       if (totPages <= 9) {

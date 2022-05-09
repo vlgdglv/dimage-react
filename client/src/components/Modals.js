@@ -38,15 +38,15 @@ class Modals extends React.Component{
                     {/* changes need to be made */}
                     <div>
                     <span>Author's Share : </span>
-                    <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.offer*0.1).toFixed(6)} ETH</span>
+                    <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.authorShare).toFixed(6)} ETH</span>
                     </div>
                     <div>
-                      <span>Disseminator's reward: </span>
+                      <span>Previous owners' reward: </span>
                       <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.offer*0.15).toFixed(6)} ETH</span>
                     </div>
                     <div>
                       <span>Your Share : </span>
-                      <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.offer*0.9).toFixed(6)} ETH</span>
+                      <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.ownerShare).toFixed(6)} ETH</span>
                     </div>
                   </div>
                 </div>
@@ -89,11 +89,11 @@ class Modals extends React.Component{
                   <div className="d-flex align-items-end flex-column">
                     <div>
                     <span>Author's may get : </span>
-                    <span style={{ color:"#8B7E66",maxWidth:"10px"}}>{Number(this.props.onTx.offer*0.1).toFixed(6)} ETH</span>
+                    <span style={{ color:"#8B7E66",maxWidth:"10px"}}>{Number(this.props.onTx.authorShare).toFixed(6)} ETH</span>
                     </div>
                     <div>
                       <span>You may get : </span>
-                      <span style={{ color:"#8B7E66",maxWidth:"10px"}}>{Number(this.props.onTx.offer*0.9).toFixed(6)} ETH</span>
+                      <span style={{ color:"#8B7E66",maxWidth:"10px"}}>{Number(this.props.onTx.ownerShare).toFixed(6)} ETH</span>
                     </div>
                   </div>
                 </div>

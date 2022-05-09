@@ -5,7 +5,7 @@ import CardHeader from "react-bootstrap/esm/CardHeader";
 import { newPurchase } from "../http/purchase";
 
 import AccountInfo from "../components/AccountInfo";
-import { getThumbnail } from "../http/image";
+import { getImageByID, getThumbnail } from "../http/image";
 
 //web3
 import { web3Context } from '../context/web3Context';
@@ -13,10 +13,9 @@ import ContractPurchase from '../abis/Purchase.json'
 import ContractRelease from "../abis/Release.json";
 //Footer
 import Footer from "../components/Footer";
+import MyAlert from "../components/MyAlert";
 
-
-const requireContext = require.context("../pics", true, /^\.\/.*\.png$/);
-const testImages = requireContext.keys().map(requireContext);
+const moment = require('moment')
 
 class Purchase extends React.Component{
   
@@ -27,45 +26,50 @@ class Purchase extends React.Component{
     this.state = {
       netID: 0,
       image: '',
-      imageID:3,
-      imageAuthor: "0x9aEB35aa6EE18cDe040E3903B6aec935619D75cB",
-      imageOwner: "0x9aEB35aa6EE18cDe040E3903B6aec935619D75cB",
       imgSrc:'',
-      release:'',
-      txCount:0,
+      releaseAddress:'',
+      authorPercent:0.2,
+      loading:false,
+      showAlert:false,
+      type:'',
+      message:'',
     }
   }
 
-  async loadBlockchainData() {
+  async loadBlockchainData(id) {
     const web3 = this.context.web3
     const networkId = await web3.eth.net.getId()
     const releaseNetworkData = ContractRelease.networks[networkId]
     if (releaseNetworkData) {
+      this.setState({releaseAddress: releaseNetworkData.address})
       const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
-      this.setState({ release })
-      const txCount = await release.methods.getTxCount().call()
+      const txCount = await release.methods.getTxCount(id).call()
+      console.log(txCount)
+      let ratio = 0.2
+      if (txCount <= 10) { ratio = 0.2 }
+      else if (txCount <= 50) { ratio = 0.1}
+      else { ratio = 0.05}
+      this.setState({authorPercent: ratio})
     }
   }
 
   componentDidMount = () => {
-    const id = this.props.location.id
-    const idx = Math.floor(Math.random() * 43)
-    const img = testImages[idx]
-    // console.log(id)
-    // console.log(idx)
-    const image = {
-      account: '',
-      web3: null,
-      balance:'',
-      imgID: 0,
-      image: img,
-      title: "there is no title",
-      author: this.state.imageAuthor,
-      owner: this.state.imageOwner
-    }
-    // console.log(this.props.match.params.imgID)
-    // this.setState({imgID: this.props.match.params.imgID})
-    this.setState({image: image })
+    // const id = this.props.location.id
+    const id=1
+    this.setState({imageID:id})
+    console.log("purchase id="+id)
+    this.loadBlockchainData(id).then(()=>{
+      console.log(this.state.authorPercent)
+    })
+    
+    getImageByID({id:id}).then((res)=> {
+      if(res.success) {
+        // console.log(res)
+        this.setState({image: res.data })
+        this.handleImageSrc(res.data.thumbnailPath)
+        console.log(this.state.image)
+      }
+    })
     // console.log(this.state.image)  
     const account = this.context.account
     this.setState({account})
@@ -98,44 +102,52 @@ class Purchase extends React.Component{
       })
     });
 
-    this.handleImageSrc()
   }
 
   handlePurchaseSumbit = (event) => {
     event.preventDefault()
+    this.setState({loading: true})
     const web3 = this.context.web3;
     let offerAmount = this.offerAmount.value
+    const authorPercent = this.state.authorPercent;
+    let authorShare = Number(offerAmount) * authorPercent;
+    let ownerShare  = Number(offerAmount) * (1.0 - authorPercent - 0.15)
 
     offerAmount = web3.utils.toWei(offerAmount, 'Ether')
 
-    let contractInstance = new web3.eth.Contract(ContractPurchase.abi,{gasPrice:10000,gasLimit:8000000})
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi,{gasPrice:10000,gasLimit:600000})
     
-    const releaseNetworkData = ContractRelease.networks[this.state.netID]
-    const releaseAddress = releaseNetworkData.address
+    // const releaseNetworkData = ContractRelease.networks[this.state.netID]
+    const releaseAddress = this.state.releaseAddress
     console.log("release addr = " + releaseAddress)
-    const imageID = 2;
-    const imageOwner = this.state.imageOwner;
-    const imageAuthor = this.state.imageAuthor
+    const imageID = 1;
+    const imageOwner = this.state.image.owner;
+    const imageAuthor = this.state.image.author
     const purchaser = this.state.account;
-    const sha3 = "0x30f31556837b6521fe07275e6b6a33801e4eeb33dec9e79344e848ccc24ccc61";
+    const sha3 = this.state.image.sha3;
 
     let address = null;
     contractInstance.deploy({
       data: ContractPurchase.bytecode,
-      arguments: [releaseAddress,imageID,purchaser,imageOwner,imageAuthor,3600, sha3],
+      arguments: [releaseAddress,imageID,purchaser,imageOwner,imageAuthor,3600,sha3],
     }).send({from: purchaser, value:offerAmount })
+    .on('error',(error) => {
+      this.setState({loading: false})
+      this.popAlert("danger",error.message)
+    })
     .then((newContractInstance) => {
       const address = newContractInstance.options.address
       const contract = new web3.eth.Contract(ContractPurchase.abi, address)
       console.log(address)
       contract.methods.launchTime().call().then((launchTime) => {
         console.log(launchTime)
-
         let obj = {
           contractAddress: address,
           purchaser: purchaser,
           imageOwner: imageOwner,
           imageAuthor: imageAuthor,
+          ownerShare: ownerShare.toString(),
+          authorShare:authorShare.toString(),
           sha3:sha3,
           imageID:imageID,
           offer: offerAmount,
@@ -143,17 +155,22 @@ class Purchase extends React.Component{
           duration: 3600
         }
         newPurchase(obj, true).then((res) => {
-          if (res.suceess){
-            console.log(res.message)
+          this.setState({loading: false})
+          if (res.success){
+            this.popAlert("success","Purchase Launched! Check it in your Trades page")
+          }else{
+            this.popAlert("danger",res.message)
           }
+        }).catch((error)=>{
+          this.setState({loading: false})
+          this.popAlert("danger",error)
         })
       })
     })
   }
 
-  handleImageSrc = () => {
+  handleImageSrc = (path) => {
     let formData = new FormData()
-    let path = "D:\\Fun\\proj12\\Dimage-back\\dimage\\target\\classes\\upload\\20220501\\0xfaac5b85809aead81ded90b7652bd74d1d8d0d03cdd9b21e08e995c6e9873da3.JPG"
     formData.append("path", path)
     getThumbnail( formData ).then((res) => {
       let blob  = new Blob([res])
@@ -161,6 +178,16 @@ class Purchase extends React.Component{
       this.setState({imgSrc:url})
       console.log(res)
     })
+  }
+
+  popAlert = (type,message) => {
+    this.setState({type})
+    this.setState({message})
+    this.setState({showAlert:true})
+  }
+
+  closeAlert = () => { 
+    this.setState({showAlert:false})
   }
 
   render() {
@@ -192,6 +219,12 @@ class Purchase extends React.Component{
                   <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.image.author}</p>
                   <h5 className="mx-3">Owner</h5>
                   <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.image.owner}</p>
+                  <h5 className="mx-3">Release Time</h5>
+                  <p className="mx-3 bg-light border rounded text-center text-truncate">{moment(this.state.image.date).format("YYYY-MM-DD HH:mm:ss")}</p>
+                  <h5 className="mx-3">Transaction Count</h5>
+                  <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.image.txCount}</p>
+                  <h5 className="mx-3">Total transaction amount sum(ETH)</h5>
+                  <p className="mx-3 bg-light border rounded text-center text-truncate">{0}</p>
               </div>
             </div>
             <div className="col-md-6 col-lg-6">
@@ -229,6 +262,24 @@ class Purchase extends React.Component{
                     >Confirm</button>
                 </div>
             </form>
+            <div style={{ marginTop:"20px"}}>
+              {
+                
+                  this.state.loading ?
+                  <div class="d-flex align-items-center justify-content-center">
+                    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                    <div className="mx-1 text-primary">
+                      <strong >Continue your operation in MetaMask...</strong>
+                    </div>
+                  </div>
+                  :
+                  <MyAlert 
+                    show={this.state.showAlert} 
+                    message={this.state.message} 
+                    type={this.state.type}
+                    closeAlert={this.closeAlert}/> 
+                }
+              </div>
             </div>
             <div className="col-md-5 col-lg-5">
               <div className="my-2">  

@@ -17,7 +17,8 @@
         }
       ],
       "stateMutability": "view",
-      "type": "function"
+      "type": "function",
+      "constant": true
     },
     {
       "inputs": [
@@ -41,7 +42,8 @@
         }
       ],
       "stateMutability": "pure",
-      "type": "function"
+      "type": "function",
+      "constant": true
     }
   ],
   "metadata": "{\"compiler\":{\"version\":\"0.8.13+commit.abaa5c0e\"},\"language\":\"Solidity\",\"output\":{\"abi\":[{\"inputs\":[],\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"inputs\":[],\"name\":\"contractName\",\"outputs\":[{\"internalType\":\"string\",\"name\":\"\",\"type\":\"string\"}],\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"bytes32\",\"name\":\"hash\",\"type\":\"bytes32\"},{\"internalType\":\"bytes\",\"name\":\"signature\",\"type\":\"bytes\"}],\"name\":\"verify\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"stateMutability\":\"pure\",\"type\":\"function\"}],\"devdoc\":{\"kind\":\"dev\",\"methods\":{},\"version\":1},\"userdoc\":{\"kind\":\"user\",\"methods\":{},\"version\":1}},\"settings\":{\"compilationTarget\":{\"project:/contracts/Verification.sol\":\"Verification\"},\"evmVersion\":\"london\",\"libraries\":{},\"metadata\":{\"bytecodeHash\":\"ipfs\"},\"optimizer\":{\"enabled\":false,\"runs\":200},\"remappings\":[]},\"sources\":{\"project:/contracts/Verification.sol\":{\"keccak256\":\"0xa4229f35e75c89f7cd51ee5f4ea764b125b1f8ee84d9bc8b756cd61d53cee107\",\"license\":\"MIT\",\"urls\":[\"bzz-raw://d937285c8ab2c33e09f4520b9ed7306cc42399aed1086058b0fccacb770476aa\",\"dweb:/ipfs/QmR78yq2LfMC6zRZFZmZNKfiFbQDtucjQzECVTJH5v9xKC\"]}},\"version\":1}",
@@ -6657,12 +6659,13 @@
     "5777": {
       "events": {},
       "links": {},
-      "address": "0xa209F22651d171095dc65949047b65C648eE9197",
-      "transactionHash": "0x7ff06aa1c70af166636e4256dbf90ca61c7a0bd6a8741fa9e33700927c313a3c"
+      "address": "0x902e609D2EC84B9091Ac20c1A776cEf0A72CFeAF",
+      "transactionHash": "0x31d42b19dc1e6c474f8b2a8e6108fc529373257596d02bc59d71f8be86b5cfdd"
     }
   },
   "schemaVersion": "3.4.5",
-  "updatedAt": "2022-05-07T03:43:44.177Z",
+  "updatedAt": "2022-05-08T05:56:49.311Z",
+  "networkType": "ethereum",
   "devdoc": {
     "kind": "dev",
     "methods": {},

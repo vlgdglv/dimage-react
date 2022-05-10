@@ -6,6 +6,10 @@ export const getImages = (p) => get('/getimages',p);
 
 export const getImageByID = (p) => get('/getimagebyid',p)
 
+export const getImageByAuthor = (p) => get('/getimagebyauthor', p)
+
+export const getImageByOwner = (p) => get('/getimagebyowner', p)
+
 export function getThumbnail(data) {
   let url = '/thumbnailTest'
   return new Promise((resolve, reject) => {

@@ -1,12 +1,15 @@
 import React from "react";
 import { Container,Dropdown } from "react-bootstrap";
 import { withRouter } from "react-router";
-import { getThumbnail } from "../http/image";
+
+
+import { web3Context } from '../context/web3Context';
+
 import MyPagination from "../components/MyPagination";
 import Album from "../components/Album";
 import Footer from "../components/Footer";
 import { getImages } from "../http/image";
-
+import { getThumbnail } from "../http/image";
 import { altPic } from '../altImage.png'
 
 const requireContext = require.context("../pics", true, /^\.\/.*\.png$/);
@@ -14,7 +17,9 @@ const testImages = requireContext.keys().map(requireContext);
 const moment = require('moment')
 
 class Home extends React.Component{
-  
+
+  static contextType = web3Context; 
+
   constructor(props){
     super(props)
     this.state = {
@@ -30,8 +35,10 @@ class Home extends React.Component{
   }
 
   componentDidMount = () => {
+
+    const account = this.context.account
     testImages.sort(() => {return Math.random() - 0.5})
-    // let images = testImages.slice(0,15)
+    
     this.loadImages(1,15,this.state.order) 
   }
 
@@ -52,6 +59,7 @@ class Home extends React.Component{
             imageSrc: image.thumbnailPath,
             imageID: image.imageID,
             title:image.title,
+            owner:image.owner,
             date:image.releaseTime,
             loading:true
           }
@@ -181,10 +189,13 @@ class Home extends React.Component{
                           <p className="card-text text-truncate">{image.title}</p>
                           <div className="d-flex justify-content-between align-items-center">
                             <div className="btn-group">
-                              <button 
+                              {image.owner == this.context.account ? 
+                              <button type="button" className="btn btn-sm btn-outline-secondary" disabled>Buy</button>
+                              :<button 
                                 type="button"  id={image.imageID} onClick={this.handlePurchase}
                                 className="btn btn-sm btn-outline-secondary"
                                 >Buy</button>
+                              }
                               <button 
                                 type="button" id={image.imageID} onClick={this.handleDetail}
                                 className="btn btn-sm btn-outline-secondary"

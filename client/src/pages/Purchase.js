@@ -46,9 +46,9 @@ class Purchase extends React.Component{
       const txCount = await release.methods.getTxCount(id).call()
       console.log(txCount)
       let ratio = 0.2
-      if (txCount <= 10) { ratio = 0.2 }
-      else if (txCount <= 50) { ratio = 0.1}
-      else { ratio = 0.05}
+      if (txCount <= 10) { ratio = 0.3 }
+      else if (txCount <= 50) { ratio = 0.2}
+      else { ratio = 0.15}
       this.setState({authorPercent: ratio})
     }
   }
@@ -223,8 +223,6 @@ class Purchase extends React.Component{
                   <p className="mx-3 bg-light border rounded text-center text-truncate">{moment(this.state.image.date).format("YYYY-MM-DD HH:mm:ss")}</p>
                   <h5 className="mx-3">Transaction Count</h5>
                   <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.image.txCount}</p>
-                  <h5 className="mx-3">Total transaction amount sum(ETH)</h5>
-                  <p className="mx-3 bg-light border rounded text-center text-truncate">{0}</p>
               </div>
             </div>
             <div className="col-md-6 col-lg-6">

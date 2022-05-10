@@ -31,7 +31,7 @@ class Profile extends React.Component {
     this.setState({web3})
     // let balance = this.context.balance
     // this.setState({balance})
-    console.log(web3)
+    // console.log(web3)
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
       console.log("[profile]"+balance)
@@ -46,8 +46,8 @@ class Profile extends React.Component {
       this.setState({account})
       web3.eth.getBalance(account).then((balance)=>{
         this.setState({balance: web3.utils.fromWei(balance)})
-        console.log("[profile]"+balance)
       })
+      window.location.reload()
     });
   }
   
@@ -76,12 +76,12 @@ class Profile extends React.Component {
         </div>
       </div>
       
-      <div className="tab-content" id="v-pills-tabContent" style={{ minWidth:"calc(100vw - 250px)"}}>
+      <div className="tab-content" id="v-pills-tabContent" style={{ width:"calc(100vw - 250px)"}}>
         <div className="tab-pane fade show active" id="v-pills-overview" role="tabpanel" aria-labelledby="v-pills-overview-tab">
           <Overview account={this.state.account} balance={this.state.balance}/>
         </div>
-        <div className="tab-pane fade" id="v-pills-creation" role="tabpanel" aria-labelledby="v-pills-creation-tab"><Creation/></div>
-        <div className="tab-pane fade" id="v-pills-possession" role="tabpanel" aria-labelledby="v-pills-possession-tab"><Possession/></div>
+        <div className="tab-pane fade" id="v-pills-creation" role="tabpanel" aria-labelledby="v-pills-creation-tab"><Creation account={this.state.account} /></div>
+        <div className="tab-pane fade" id="v-pills-possession" role="tabpanel" aria-labelledby="v-pills-possession-tab"><Possession account={this.state.account}/></div>
         {/* <div className="tab-pane fade" id="v-pills-trades" role="tabpanel" aria-labelledby="v-pills-trades-tab"><Trades/></div> */}
       </div>
     </main>    

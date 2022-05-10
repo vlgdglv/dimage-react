@@ -35,7 +35,7 @@ class App extends Component {
       getWeb3().then((web3) => {
         this.setState({web3})
         web3.eth.getAccounts().then((account) => {
-          console.log(account[0])
+          // console.log(account[0])
           this.setState({account:account[0]})
         })
       })

@@ -19,18 +19,24 @@ class Detail extends React.Component{
       image:'',
       loading: false,
       latestTx:'',
+      isMe:false,
+      account:'',
     }
   }
 
   componentDidMount = () => {
     let id = this.props.location.id
-    id = 1
+    // id = 1
+    const account = this.context.account
+    this.setState({account})
+
     this.setState({loading:true})
     getImageByID({id:id}).then((res)=> {
       if(res.success) {
         console.log(res.data)
         this.setState({image: res.data })
         this.handleImageSrc(res.data.thumbnailPath)
+        this.setState({isMe: account == res.data.owner})
         // console.log(this.state.image)
       }
     })
@@ -44,6 +50,15 @@ class Detail extends React.Component{
         this.setState({latestTx})
       }
     })
+    window.ethereum.on('accountsChanged', (account) => {
+      account = account.toString()
+      if (account === '') {
+        this.props.history.push('/error')
+      }
+      this.setState({account})
+      this.setState({isMe: account == this.state.image.owner})
+      window.location.reload()
+    });
 
   }
 
@@ -94,10 +109,19 @@ class Detail extends React.Component{
           <div className="col-md-4 col-lg-4 order-md-last" >
             <div className="border rounded ">  
                     <h5 className="my-3 text-center" >Image Info</h5>
-                    <h5 className="mx-3" style={{ color:"#228B22"}}>Author</h5>
+                    <h5 className="mx-3" style={{ color:"#228B22"}}>Author &nbsp; 
+                    { this.state.account == this.state.image.author?<span class="badge bg-primary">me</span>:<span></span>}
+                    </h5>
                     <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.author}</p>
-                    <h5 className="mx-3" style={{ color:"#228B22"}}>Owner</h5>
+                    <h5 className="mx-3" style={{ color:"#228B22"}}>Owner &nbsp;
+                    { this.state.isMe? <span class="badge bg-primary">me</span>:<span></span>}
+                    </h5>
                     <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.owner}</p>
+                    { this.state.isMe?
+                      <div>
+                        <h5 className="mx-3" style={{ color:"	#B22222"}}>IPFS Hash (CID)</h5>
+                        <p className="mx-2 bg-light border rounded text-center text-break">{this.state.image.ipfsHash}</p>
+                      </div>:<div></div>}
                     <h5 className="mx-3" style={{ color:"#4169E1"}}>SHA3(keccak256)</h5>
                     <p className="mx-2 bg-light border rounded text-center text-break">{this.state.image.sha3}</p>
                     <h5 className="mx-3" style={{ color:"#4169E1"}}>Signature</h5>

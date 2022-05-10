@@ -329,8 +329,8 @@ class Trades extends React.Component {
           <div  className="tab-pane fade show active" id="v-pills-offers" role="tabpanel" aria-labelledby="v-pills-offers-tab">
             <Container style={{ maxWidth:"70%"}} >
               <div className="d-flex justify-content-between">
-                <h1 style={{ paddingTop:"76px" }}>Offers for me</h1>
-                <Dropdown style={{ paddingTop:"76px" }}>
+                <h1 style={{ paddingTop:"65px" }}>Offers for me</h1>
+                <Dropdown style={{ paddingTop:"65px" }}>
                   <Dropdown.Toggle variant="primary" id="dropdown-basic">
                     Filter
                   </Dropdown.Toggle>
@@ -360,14 +360,14 @@ class Trades extends React.Component {
                   </div>
                 </div>
               :     
-              <Container className="py-2 ">
+              <Container>
               <MyPagination
                 totPages={this.state.offerPage.totPages}
                 currentPage={this.state.offerPage.currentPage}
                 pageClicked={(ele) => this.handleOfferPageChange(ele)}
               >
                 {this.state.offers.length == 0 ?
-                  <h3 className="m-3 text-center border rounded bg-light">No data yet</h3>
+                  <h3 className="m-3 text-center border rounded bg-light" >No data yet</h3>
                   :this.state.offers.map((offer, key) => {
                     let opGroup = <div><h5><span class="badge bg-primary">State</span></h5></div>
                     let timeGroup = <div></div>

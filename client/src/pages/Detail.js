@@ -5,6 +5,7 @@ import CardHeader from "react-bootstrap/esm/CardHeader";
 import { getImageByID, getThumbnail } from "../http/image";
 import { getLatestTx } from "../http/purchase";
 import Footer from "../components/Footer";
+import MyAlert from "../components/MyAlert";
 import { web3Context } from '../context/web3Context';
 require('bootstrap')
 const moment = require('moment')
@@ -83,7 +84,6 @@ class Detail extends React.Component{
         </div>
         <div className="row g-3">
           <div className="col-md-8 col-lg-8">
-            
             <Card className="mb-4">
               <CardHeader > 
               <div className="d-flex column">
@@ -105,6 +105,46 @@ class Detail extends React.Component{
                   />
               }
             </Card>
+            <div>
+              <p>
+                <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" 
+                  data-bs-target="#verify" aria-expanded="false" aria-controls="verify">
+                  Need a verification?
+                </button>
+              </p>
+              <div class="collapse" id="verify">
+                <div class="card card-body">
+                  <form onSubmit={(event) => {
+                    event.preventDefault()
+                  }}>
+                    <div className="form-group">
+                      <input
+                        id="imgHash"
+                        type="text"
+                        ref={(input) => { this.imgHash = input }}
+                        className="form-control"
+                        placeholder="input imgHash"
+                        required />
+                      <input
+                        id="signature"
+                        type="text"
+                        ref={(input) => { this.signature = input }}
+                        className="form-control mt-2"
+                        placeholder="input signature"
+                        required />
+                    </div>
+                    <button type="submit" className="btn btn-primary mt-2">Verify!</button>
+                  </form>
+                  <div className="alertplace py-3">
+                    <MyAlert 
+                      show="true" 
+                      message="shit bro" 
+                      type="success"
+                      closeAlert={this.closeAlert}/>
+                  </div> 
+                </div>
+              </div>
+            </div>
           </div>
           <div className="col-md-4 col-lg-4 order-md-last" >
             <div className="border rounded ">  

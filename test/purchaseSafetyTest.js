@@ -22,7 +22,7 @@ contract('Purchase confirmPurchase() safety tests', ([deployer,purchaser, owner,
     instance = new web3.eth.Contract(Purchase.abi,{gasLimit:gasLimit} )
     const result = await instance.deploy({
       data: Purchase.bytecode,
-      arguments:[releaseAddress, 1, purchaser, owner, owner ,3600, "0x1234"],
+      arguments:[releaseAddress, 1, purchaser ,3600, "0x1234"],
     }).send({from:purchaser, value: offer})
     address = result.options.address
     //calc deploy contract gas fee
@@ -61,7 +61,7 @@ contract('Purchase declinePurchase() safety tests', ([deployer,purchaser, owner,
     instance = new web3.eth.Contract(Purchase.abi,{gasLimit:gasLimit} )
     const result = await instance.deploy({
       data: Purchase.bytecode,
-      arguments:[releaseAddress, 1, purchaser, owner, owner ,3600, "0x1234"],
+      arguments:[releaseAddress, 1, purchaser ,3600, "0x1234"],
     }).send({from:purchaser, value: offer})
     address = result.options.address
     //calc deploy contract gas fee
@@ -101,7 +101,7 @@ contract('Purchase cancelPurchase() safety tests', ([deployer,purchaser, owner, 
     instance = new web3.eth.Contract(Purchase.abi,{gasLimit:gasLimit} )
     const result = await instance.deploy({
       data: Purchase.bytecode,
-      arguments:[releaseAddress, 1, purchaser, owner, owner ,3600, "0x1234"],
+      arguments:[releaseAddress, 1, purchaser ,3600, "0x1234"],
     }).send({from:purchaser, value: offer})
     address = result.options.address
   })
@@ -139,7 +139,7 @@ contract('time expired tests', ([deployer,purchaser, owner, author, nobody]) => 
     instance = new web3.eth.Contract(Purchase.abi,{gasLimit:gasLimit} )
     const result = await instance.deploy({
       data: Purchase.bytecode,
-      arguments:[releaseAddress, 1, purchaser, owner, owner ,3600, "0x1234"],
+      arguments:[releaseAddress, 1, purchaser, 3600, "0x1234"],
     }).send({from:purchaser, value: offer})
     address = result.options.address
     //calc deploy contract gas fee
@@ -149,7 +149,7 @@ contract('time expired tests', ([deployer,purchaser, owner, author, nobody]) => 
     it('try to confirm or decline an expired purchase', async() => {
       const result = await instance.deploy({
         data: Purchase.bytecode,
-        arguments:[releaseAddress, 1, purchaser, owner, owner, 16,"0x1234"],
+        arguments:[releaseAddress, 1, purchaser, 16,"0x1234"],
       }).send({from:purchaser, value: offer})
       const contract = new web3.eth.Contract(Purchase.abi, result.options.address)
       await new Promise(resolve => setTimeout(resolve,25000 )).then(async()=>{
@@ -164,7 +164,7 @@ contract('time expired tests', ([deployer,purchaser, owner, author, nobody]) => 
     it('cancel a expired contract to retrieve ether', async() => {
       const result = await instance.deploy({
         data: Purchase.bytecode,
-        arguments:[releaseAddress, 1, purchaser, owner, owner, 16,"0x1234"],
+        arguments:[releaseAddress, 1, purchaser, 16,"0x1234"],
       }).send({from:purchaser, value: offer})
       const contract = new web3.eth.Contract(Purchase.abi, result.options.address)
       await new Promise(resolve => setTimeout(resolve,25000 )).then(async()=>{

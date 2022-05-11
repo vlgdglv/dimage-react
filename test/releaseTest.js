@@ -7,25 +7,25 @@ require('chai').use(require('chai-as-promised')).should()
 contract('Release',([deployer, author, buyer]) => {
   let release
 
-  describe('deployment',async () => {
+  // describe('deployment',async () => {
    
-    before(async () => {
-      release = await Release.deployed()
-    })
+  //   before(async () => {
+  //     release = await Release.deployed()
+  //   })
   
-    it('deploys successfully', async() => {
-        const address = await release.address
-        assert.notEqual(address, 0x0)
-        assert.notEqual(address, '')
-        assert.notEqual(address, null)
-        assert.notEqual(address, undefined)
-    })
+  //   it('deploys successfully', async() => {
+  //       const address = await release.address
+  //       assert.notEqual(address, 0x0)
+  //       assert.notEqual(address, '')
+  //       assert.notEqual(address, null)
+  //       assert.notEqual(address, undefined)
+  //   })
 
-    it('has a name', async () => {
-        const name = await release.contractName()
-        assert.equal(name, 'release')
-    })
-  })
+  //   it('has a name', async () => {
+  //       const name = await release.contractName()
+  //       assert.equal(name, 'release')
+  //   })
+  // })
 
   describe('images', async()=>{
     let result, imageCount
@@ -37,6 +37,7 @@ contract('Release',([deployer, author, buyer]) => {
     
     
     before(async () => {
+        release = await Release.deployed()
         result = await release.uploadImage(hash, sha1,sign1,{from: author})
         imageCount = await release.imageCount()
         await release.uploadImage(hash, sha2, sign2,{from: author})
@@ -84,11 +85,14 @@ contract('Release',([deployer, author, buyer]) => {
 
     it('test sha3 match', async() => {
       let result = await release.isSHA3Match(1,sha1)
-      console.log(result)
+      // console.log(result)
+      assert.equal(result, true)
       result = await release.isSHA3Match(2, sha2)
-      console.log(result)
+      assert.equal(result, true)
+      // console.log(result)
       result = await release.isSHA3Match(1, sha2)
-      console.log(result)
+      assert.equal(result, false)
+      // console.log(result)
     })
 
     it('test txCount', async() => {

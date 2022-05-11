@@ -32,40 +32,37 @@ contract('Purchase basics', ([deployer,purchaser, owner, author, nobody]) => {
       // console.log(instance)
       const result = await instance.deploy({
         data: Purchase.bytecode,
-        arguments:[releaseAddress, 1, purchaser, owner, owner ,360, "0x1234"],
+        arguments:[releaseAddress, 1, purchaser ,3600, "0x1234"],
       }).send({ from:purchaser, value: offer})
-      // console.log(result.options.data)
       address = result.options.address
       //calc deploy contract gas fee
       const afterB = BigInt(await web3.eth.getBalance(purchaser))
       deployGasFee = originPurchaseBalance - afterB - BigInt(offer)
-      console.log('deploy gas = ' + deployGasFee )
+      // console.log('deploy gas = ' + deployGasFee )
     })
 
     it('deployment issues', async() => {
       instance = new web3.eth.Contract(Purchase.abi,{
         gasLimit:30000000
       })
-      instance.deploy({data: Purchase.bytecode,arguments:[releaseAddress,0,purchaser, owner, owner ,3600, "0x1234"]})
+      instance.deploy({data: Purchase.bytecode,arguments:[releaseAddress,0,purchaser ,3600, "0x1234"]})
       .send({from:purchaser, value: offer}).should.be.rejected
-      instance.deploy({data: Purchase.bytecode,arguments:[releaseAddress,1,purchaser, owner, owner,3, "0x1234"]})
+      instance.deploy({data: Purchase.bytecode,arguments:[releaseAddress,1,purchaser,3, "0x1234"]})
       .send({from:purchaser, value: offer}).should.be.rejected  
-      instance.deploy({data: Purchase.bytecode,arguments:[releaseAddress,1,purchaser, owner, author,3600, "0x1234"]})
-      .send({from:purchaser, value: offer}).should.be.rejected 
-      instance.deploy({data: Purchase.bytecode,arguments:[releaseAddress, 1, owner, owner, owner ,360, "0x1234"]})
+      instance.deploy({data: Purchase.bytecode,arguments:[releaseAddress, 1, owner,3600, "0x1234"]})
       .send({from:purchaser, value: offer}).should.be.rejected 
     })
     it('parameters check', async() => {
       const sha3="0x1234000000000000000000000000000000000000000000000000000000000000"
       const contract = new web3.eth.Contract(Purchase.abi, address)
-      console.log("[LOG]deployGasFee = " + Number(deployGasFee))
+      // console.log("[LOG]deployGasFee = " + Number(deployGasFee))
       assert.equal(await contract.methods.contractRelease().call(), releaseAddress, "release contract right")
       assert.equal(await contract.methods.imageID().call(), 1, "id right")
       assert.equal(await contract.methods.purchaser().call(), purchaser, "purchase right")
       assert.equal(await contract.methods.imageOwner().call(), owner, "owner right")
       assert.equal(await contract.methods.imageAuthor().call(), owner, "author right")
       assert.equal(await contract.methods.SHA3().call(), sha3, "sha3 right")
-      assert.equal(await contract.methods.duration().call(), 360, "duration right")
+      assert.equal(await contract.methods.duration().call(), 3600, "duration right")
       assert.equal(await contract.methods.amount().call(), offer, "amount right")
       assert.equal(await contract.methods.isClosed().call(), false, "success flag right")
       // console.log("[LOG] author share = " + await contract.methods.authorShare().call())

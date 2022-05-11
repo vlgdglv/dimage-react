@@ -1,22 +1,14 @@
 import React from "react";
 import { Container,Dropdown } from "react-bootstrap";
-
 import { web3Context } from "../context/web3Context";
-
 import ContractRelease from '../abis/Release.json'
-import ContractPurchase from '../abis/Purchase.json'
-
-import { getTxByOwner, getTxByPurchaser } from '../http/purchase'
-import Footer from "../components/Footer";
 import MyPagination from "../components/MyPagination";
-
-import { updateTx } from "../http/purchase";
 import Modals from "../components/Modals";
-
-const requireContext = require.context("../pics", true, /^\.\/.*\.png$/);
-const testImages = requireContext.keys().map(requireContext);
-
+import { getTxByOwner, getTxByPurchaser } from '../http/purchase'
+import { getThumbnailByID } from "../http/image";
+import { updateTx } from "../http/purchase";
 const moment = require('moment')
+
 class Trades extends React.Component {
 
   static contextType = web3Context;
@@ -73,11 +65,20 @@ class Trades extends React.Component {
         console.log(res)
         let data = res.data
         let offers = data.ptxList
+        console.log(offers)
         offers.map((each) => {
           const web3 = this.context.web3
           each.offer = web3.utils.fromWei(each.offer)
           each.authorShare = web3.utils.fromWei(each.authorShare)
           each.ownerShare = web3.utils.fromWei(each.ownerShare)
+          each.id = each.imageID
+          each.loading = true
+          each.imgSrc = ''
+        })
+        offers.forEach(async offer => {
+          offer.imgSrc = await this.handleImageSrc(offer.id)
+          offer.loading = false
+          this.setState({offers})
         })
         this.setState({offerPage:{totPages:data.totalPages,currentPage:curPage}})
         this.setState({offers: offers})
@@ -102,6 +103,14 @@ class Trades extends React.Component {
           each.offer = web3.utils.fromWei(each.offer)
           each.authorShare = web3.utils.fromWei(each.authorShare)
           each.ownerShare = web3.utils.fromWei(each.ownerShare)
+          each.id = each.imageID
+          each.loading = true
+          each.imgSrc = ''
+        })
+        launches.forEach(async launch => {
+          launch.imgSrc = await this.handleImageSrc(launch.id)
+          launch.loading = false
+          this.setState({launches})
         })
         console.log(data.totalPages)
         this.setState({launchPage:{totPages:data.totalPages,currentPage:curPage}})
@@ -112,12 +121,8 @@ class Trades extends React.Component {
   }
 
   componentDidMount = () => {
-    testImages.sort(() => {return Math.random() - 0.5})
-    let images = testImages.slice(0,8)
-    this.setState({images})
     const account = this.context.account
     this.setState({account})
-
     window.ethereum.on('accountsChanged', (account) => {
       console.log("[trade]change account:"+account)
       account = account.toString()
@@ -127,7 +132,6 @@ class Trades extends React.Component {
       this.setState({account})
       window.location.reload()
     });
-    
     this.getOwnerTx(account,1,4);
     this.getPurchaserTx(account,1,4);
   }
@@ -296,6 +300,15 @@ class Trades extends React.Component {
     this.getPurchaserTx(this.state.account, ele,4, this.state.launchFilterState);
   }
 
+  async handleImageSrc (id)  {
+    let formData = new FormData()
+    formData.append("imageID", id)
+    let res = await getThumbnailByID( formData )
+    let blob  = new Blob([res])
+    let url = URL.createObjectURL(blob)
+    return url 
+  }
+
   render() {
 
     return (
@@ -325,7 +338,7 @@ class Trades extends React.Component {
            </div>
         </div>
 
-        <div className="tab-content" id="v-pills-tabContent" style={{ minWidth:"calc(100vw - 250px)"}}>
+        <div className="tab-content" id="v-pills-tabContent" style={{ width:"calc(100vw - 250px)"}}>
           <div  className="tab-pane fade show active" id="v-pills-offers" role="tabpanel" aria-labelledby="v-pills-offers-tab">
             <Container style={{ maxWidth:"70%"}} >
               <div className="d-flex justify-content-between">
@@ -404,8 +417,14 @@ class Trades extends React.Component {
                       <div class="card m-3">
                         <div class="card-body row d-flex" style={{ padding:"10px"}}>
                           <div className="col-2">
-                            <img className="border-3 rounded" 
-                              style={{height:"100px", width:"100px",objectFit:"cover"}} src={this.state.images[key]}/>
+                            {offer.loading?
+                              <div class="d-flex justify-content-center" style={{ height:"100px", width:"100px",}}>
+                                <div class="spinner-border text-primary  align-self-center" role="status">
+                                  <span class="visually-hidden">Loading...</span>
+                                </div>
+                              </div>
+                              :<img className="border-3 rounded" 
+                              style={{height:"100px", width:"100px",objectFit:"cover"}} src={offer.imgSrc}/>}
                           </div>
                           <div className="col-6">
                             <p style={{marginBottom:"0"}}>Contract Address:</p>
@@ -463,15 +482,13 @@ class Trades extends React.Component {
                     </Dropdown.Menu>
                   </Dropdown>
                 </div>
-
               {this.state.loadLaunch ?
                 <div class="d-flex justify-content-center">
                   <div class="spinner-border" role="status">
                     <span class="visually-hidden">Loading...</span>
                   </div>
                 </div>
-              :
-              <Container className="py-2">
+              :<Container className="py-2">
               <MyPagination
                 totPages={this.state.launchPage.totPages}
                 currentPage={this.state.launchPage.currentPage}
@@ -520,8 +537,14 @@ class Trades extends React.Component {
                     <div class="card m-3">
                       <div class="card-body row d-flex" style={{ padding:"10px"}}>
                         <div className="col-2">
-                          <img className="border-3 rounded" 
-                            style={{height:"100px", width:"100px",objectFit:"cover"}} src={this.state.images[key]}/>
+                        {offer.loading?
+                              <div class="d-flex justify-content-center" style={{ height:"100px", width:"100px",}}>
+                                <div class="spinner-border text-primary  align-self-center" role="status">
+                                  <span class="visually-hidden">Loading...</span>
+                                </div>
+                              </div>
+                              :<img className="border-3 rounded" 
+                              style={{height:"100px", width:"100px",objectFit:"cover"}} src={offer.imgSrc}/>}
                         </div>
                         <div className="col-6">
                           <p style={{marginBottom:"0"}}>Contract Address:</p>

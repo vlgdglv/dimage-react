@@ -12,8 +12,6 @@ import { getImages } from "../http/image";
 import { getThumbnail } from "../http/image";
 import { altPic } from '../altImage.png'
 
-const requireContext = require.context("../pics", true, /^\.\/.*\.png$/);
-const testImages = requireContext.keys().map(requireContext);
 const moment = require('moment')
 
 class Home extends React.Component{
@@ -35,10 +33,6 @@ class Home extends React.Component{
   }
 
   componentDidMount = () => {
-
-    const account = this.context.account
-    testImages.sort(() => {return Math.random() - 0.5})
-    
     this.loadImages(1,15,this.state.order) 
   }
 
@@ -104,6 +98,7 @@ class Home extends React.Component{
 
   handleDetail = (event) => {
     event.preventDefault()
+    console.log(event.target)
     const id = event.target.id
     this.props.history.push({
       pathname: 'detail',
@@ -175,10 +170,12 @@ class Home extends React.Component{
                             </div>
                             :
                             <div className="thumbnail">
-                              <a style={{ cursor:"pointer" }} key={key}>
-                              <img  className="img-responsive rounded" 
+                              <a style={{ cursor:"pointer" }} key={key}  onClick={this.handleDetail} >
+                              <img  className="img-responsive rounded" id={image.imageID}
                                 style={{ width:"100%", height:"300px", objectFit:"cover"}} 
-                                src={image.imageSrc} />
+                                src={image.imageSrc} 
+
+                                />
                               </a>
                           </div>
                           }

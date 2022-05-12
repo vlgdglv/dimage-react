@@ -8,6 +8,7 @@ import Home from "./pages/Home";
 import Profile from "./pages/Profile";
 import Release from "./pages/Release";
 import Error from "./pages/Error";
+import NoWeb3Alt from "./pages/NoWeb3Alt";
 //components
 import Header from './components/Header';
 //context
@@ -101,7 +102,7 @@ class App extends Component {
               </Switch>
             </web3Context.Provider>  
           </BrowserRouter>
-        :<div></div>
+        :<NoWeb3Alt/>
         // : <h2 style={{ paddingTop:"150px", textAlign:"center" }} > Loading Web3, account, and contract... </h2>
         }
       </div>

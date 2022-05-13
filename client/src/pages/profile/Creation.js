@@ -88,25 +88,19 @@ class Creation extends React.Component{
 
   handlePurchase = (event) => {
     event.preventDefault()
-    const id = event.target.id
-    this.props.history.push({
-      pathname: 'purchase',
-      id:`${id}`,
-    })
+    const imageID = event.target.id
+    this.props.history.push({pathname:"/purchase/"+imageID})
   }
 
   handleDetail = (event) => {
     event.preventDefault()
-    const id = event.target.id
-    this.props.history.push({
-      pathname: 'detail',
-      id:`${id}`,
-    })
+    const imageID = event.target.id
+    this.props.history.push({pathname:"/detail/"+imageID})
   }
 
   render() {
     return(
-      <main style={{ marginTop: "60px"}}>
+      <main style={{ marginTop: "70px"}}>
       <Container>
          <div className="d-flex justify-content-between py-2">
             <h2>My Creation</h2>

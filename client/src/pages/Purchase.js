@@ -24,8 +24,10 @@ class Purchase extends React.Component{
   constructor(props) {
     super(props)
     this.state = {
+      account:'',
       netID: 0,
       image: '',
+      imageID:'',
       imgSrc:'',
       releaseAddress:'',
       authorPercent:0.2,
@@ -44,7 +46,7 @@ class Purchase extends React.Component{
       this.setState({releaseAddress: releaseNetworkData.address})
       const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
       const txCount = await release.methods.getTxCount(id).call()
-      console.log(txCount)
+      // console.log(txCount)
       let ratio = 0.2
       if (txCount <= 10) { ratio = 0.3 }
       else if (txCount <= 50) { ratio = 0.2}
@@ -54,12 +56,12 @@ class Purchase extends React.Component{
   }
 
   componentDidMount = () => {
-    // const id = this.props.location.id
-    const id=1
+    let id = this.props.match.params.imageID
+    // const id=1
     this.setState({imageID:id})
     console.log("purchase id="+id)
     this.loadBlockchainData(id).then(()=>{
-      console.log(this.state.authorPercent)
+      // console.log(this.state.authorPercent)
     })
     
     getImageByID({id:id}).then((res)=> {
@@ -115,21 +117,28 @@ class Purchase extends React.Component{
 
     offerAmount = web3.utils.toWei(offerAmount, 'Ether')
 
-    let contractInstance = new web3.eth.Contract(ContractPurchase.abi,{gasPrice:10000,gasLimit:600000})
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi)
     
     // const releaseNetworkData = ContractRelease.networks[this.state.netID]
     const releaseAddress = this.state.releaseAddress
     console.log("release addr = " + releaseAddress)
-    const imageID = 1;
+    const imageID = this.state.image.imageID;
     const imageOwner = this.state.image.owner;
-    const imageAuthor = this.state.image.author
+    const imageAuthor = this.state.image.author;
     const purchaser = this.state.account;
     const sha3 = this.state.image.sha3;
-
+  
+    const duration = 3600;
+    console.log(this.state.image)
+    console.log("ID="+imageID)
+    console.log("imageOwner="+imageOwner)
+    console.log("imageAuthor="+imageAuthor)
+    console.log("purchaser="+purchaser)
+    console.log("sha3="+sha3)
     let address = null;
     contractInstance.deploy({
       data: ContractPurchase.bytecode,
-      arguments: [releaseAddress,imageID,purchaser,imageOwner,imageAuthor,3600,sha3],
+      arguments: [releaseAddress,imageID,purchaser,duration,sha3],
     }).send({from: purchaser, value:offerAmount })
     .on('error',(error) => {
       this.setState({loading: false})
@@ -146,13 +155,13 @@ class Purchase extends React.Component{
           purchaser: purchaser,
           imageOwner: imageOwner,
           imageAuthor: imageAuthor,
-          ownerShare: ownerShare.toString(),
-          authorShare:authorShare.toString(),
+          ownerShare: web3.utils.toWei(ownerShare.toString()),
+          authorShare:web3.utils.toWei(authorShare.toString()),
           sha3:sha3,
           imageID:imageID,
           offer: offerAmount,
           launchTime: launchTime,
-          duration: 3600
+          duration: duration
         }
         newPurchase(obj, true).then((res) => {
           this.setState({loading: false})
@@ -176,7 +185,7 @@ class Purchase extends React.Component{
       let blob  = new Blob([res])
       let url = URL.createObjectURL(blob);
       this.setState({imgSrc:url})
-      console.log(res)
+      // console.log(res)
     })
   }
 
@@ -198,35 +207,42 @@ class Purchase extends React.Component{
             <h2>Purchasing</h2>
             <hr></hr>
           </div>
-          <Card className="mb-4">
-            <CardHeader > 
-            <div className="d-flex column">
-              <h4 className="text-truncate align-middle" style={{maxWidth:"50%", marginBottom:"0"}}>{this.state.image.title}</h4>
+          <div className="row g-3">
+            <div className="col-md-8 col-lg-8">
+              <Card className="mb-4">
+                <CardHeader > 
+                <div className="d-flex column">
+                  <h4 className="text-truncate align-middle" style={{maxWidth:"50%", marginBottom:"0"}}>{this.state.image.title}</h4>
+                </div>
+                </CardHeader>
+                <img className="img-responsive center-block rounded" 
+                  src= { this.state.imgSrc }
+                  alt="No Thumbnail"
+                  style={{ maxWidth:"100%",maxHeight:"580px",objectFit:"cover" }}
+                />
+              </Card>
             </div>
-            </CardHeader>
-            <img className="img-responsive center-block rounded" 
-              src= { this.state.imgSrc }
-              alt="No Thumbnail"
-              style={{ maxWidth:"100%" }}
-            />
-          </Card>
+            <div className="col-md-4 col-lg-4 order-md-last" >
+              <div className="border rounded mb-4" style={{ marginBottom:"auto" }}>  
+                  <h5 className="my-3 text-center" style={{ color:"#008B45"}}>Author &amp; Owner</h5>
+                  <h5 className="mx-3">Image ID</h5>
+                  <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.imageID}</p>
+                  <h5 className="mx-3">Author</h5>
+                  <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.author}</p>
+                  <h5 className="mx-3">Owner</h5>
+                  <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.owner}</p>
+              </div>
+              <AccountInfo account={this.state.account} balance={this.state.balance}/>
+            </div>
+          </div>
+
           <hr></hr>
           <div className="row g-4">
             <div className="col-md-6 col-lg-6">
-              <div className="border rounded  my-5" style={{ marginBottom:"auto" }}>  
-                  <h5 className="my-3 text-center" style={{ color:"#008B45"}}>Author &amp; Owner</h5>
-                  <h5 className="mx-3">Author</h5>
-                  <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.image.author}</p>
-                  <h5 className="mx-3">Owner</h5>
-                  <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.image.owner}</p>
-                  <h5 className="mx-3">Release Time</h5>
-                  <p className="mx-3 bg-light border rounded text-center text-truncate">{moment(this.state.image.date).format("YYYY-MM-DD HH:mm:ss")}</p>
-                  <h5 className="mx-3">Transaction Count</h5>
-                  <p className="mx-3 bg-light border rounded text-center text-truncate">{this.state.image.txCount}</p>
-              </div>
+
             </div>
             <div className="col-md-6 col-lg-6">
-              <AccountInfo account={this.state.account} balance={this.state.balance}/>
+
             </div>
           
           </div>
@@ -282,9 +298,10 @@ class Purchase extends React.Component{
             <div className="col-md-5 col-lg-5">
               <div className="my-2">  
                 <h5 className="my-3">Tips:</h5>
-                <p>1. 10% of your bid gives to the original author as bonus.</p>
-                <p>2. Contract deploy fee is low, enjoy it!</p>
-                <p>3. You can track trade progress in your Profile/Trade page.</p>
+                <p>1<span>💰</span>Make your offer.</p>
+                <p>2<span>📄</span>Deploy contract.</p>
+                <p>3<span>☑️</span>Track trade progress in your Profile/Trade page.</p>
+                <p>4<span>🖋️</span>Sign your image after owner confirmed.</p>
               </div>
             </div>
           

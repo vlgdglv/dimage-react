@@ -161,7 +161,7 @@ contract('time expired tests', ([deployer,purchaser, owner, author, nobody]) => 
 
   describe('cancel still available', async() => {
     //  this test takes long time
-    it('cancel a expired contract to retrieve ether', async() => {
+    it('cancel an expired contract to retrieve ether', async() => {
       const result = await instance.deploy({
         data: Purchase.bytecode,
         arguments:[releaseAddress, 1, purchaser, 16,"0x1234"],

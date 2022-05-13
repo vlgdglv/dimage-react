@@ -89,39 +89,33 @@ class Home extends React.Component{
   }
   handlePurchase = (event) => {
     event.preventDefault()
-    const id = event.target.id
-    this.props.history.push({
-      pathname: 'purchase',
-      id:`${id}`,
-    })
+    const imageID = event.target.id
+    this.props.history.push({pathname:"/purchase/"+imageID})
   }
 
   handleDetail = (event) => {
     event.preventDefault()
     console.log(event.target)
-    const id = event.target.id
-    this.props.history.push({
-      pathname: 'detail',
-      id:`${id}`,
-    })
+    const imageID = event.target.id
+    this.props.history.push({pathname:"/detail/"+imageID})
   }
 
   render() {
     return(
       <main style={{ marginTop: "56px"}}>
-        <section className="py-5 text-center container">
+        <section className="py-4 text-center container">
           <div className="row py-lg-5">
             <div className="col-lg-6 col-md-8 mx-auto">
               <h1 className="fw-light">Dimage</h1>
               <p className="lead text-muted">A decentralized image sharing and trading platform</p>
-              <p>
+              {/* <p>
                 <a href="#" className="btn btn-primary my-2">Check it out</a>
-              </p>
+              </p> */}
             </div>
           </div>
         </section>
 
-        <div className="py-5 bg-light">
+        <div className="py-3 bg-light">
           <Container>
           <div className="d-flex justify-content-between py-2">
             <h2>Market Place!</h2>
@@ -155,8 +149,9 @@ class Home extends React.Component{
               pageClicked={(ele) => {this.handlePageChange(ele);}}
             >
               <div className="row row-cols-1 row-cols-sm-2 row-cols-md-3 g-3">
-              {
-                this.state.images.map((image, key) => {
+              {this.state.images.length == 0? 
+              <h3 className="m-3 text-center border rounded bg-light" style={{width:"97%"}}>Oops! No image at all</h3>
+               :this.state.images.map((image, key) => {
                   return (
                     <div className="col overflow-hiden rounded" id={key}>
                       <div className="card shadow">
@@ -211,7 +206,7 @@ class Home extends React.Component{
           </Container>
           }
         </div>
-        <Footer/>
+        <Footer />
       </main>
     )
   }

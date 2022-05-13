@@ -12,7 +12,6 @@ const moment = require('moment')
 class Trades extends React.Component {
 
   static contextType = web3Context;
-
   constructor(props){
     super(props)
     this.state = {
@@ -36,8 +35,9 @@ class Trades extends React.Component {
       release:'',
       currentPage:1,
       totPages:5,
-      offerFilterState:0,
-      launchFilterState:0,
+      offerFilterState:1,
+      launchFilterState:1,
+      filterContent:'Pending',
     }
   }  
 
@@ -98,6 +98,7 @@ class Trades extends React.Component {
       if (res.success) {
         let data = res.data
         let launches = data.ptxList
+        console.log(launches)
         launches.map((each) => {
           const web3 = this.context.web3
           each.offer = web3.utils.fromWei(each.offer)
@@ -132,8 +133,10 @@ class Trades extends React.Component {
       this.setState({account})
       window.location.reload()
     });
-    this.getOwnerTx(account,1,4);
-    this.getPurchaserTx(account,1,4);
+    this.setState({offerFilterState:1})
+    this.setState({launchFilterState:1})
+    this.getOwnerTx(account,1,4,1);
+    this.getPurchaserTx(account,1,4,1);
   }
 
   handleConfirm = (event) => {
@@ -151,7 +154,7 @@ class Trades extends React.Component {
     }).then((res)=>{
       console.log(res)
       let offers = this.state.offers;
-      offers[idx] = res.data
+      offers[idx].state = 2 
       console.log(offers)
       this.setState({offers: offers})
     })
@@ -191,7 +194,7 @@ class Trades extends React.Component {
     }).then((res)=>{
       console.log(res)
       let offers = this.state.offers;
-      offers[idx] = res.data
+      offers[idx].state = -1
       console.log(offers)
       this.setState({offers: offers})
     })
@@ -232,7 +235,7 @@ class Trades extends React.Component {
     }).then((res)=>{
       console.log(res)
       let launches = this.state.launches;
-      launches[idx] = res.data
+      launches[idx].state = -2
       console.log(launches)
       this.setState({launches: launches})
     })
@@ -274,7 +277,7 @@ class Trades extends React.Component {
     }).then((res)=>{
       console.log(res)
       let launches = this.state.launches;
-      launches[idx] = res.data
+      launches[idx].state = 0
       console.log(launches)
       this.setState({launches: launches})
     })
@@ -340,28 +343,28 @@ class Trades extends React.Component {
 
         <div className="tab-content" id="v-pills-tabContent" style={{ width:"calc(100vw - 250px)"}}>
           <div  className="tab-pane fade show active" id="v-pills-offers" role="tabpanel" aria-labelledby="v-pills-offers-tab">
-            <Container style={{ maxWidth:"70%"}} >
-              <div className="d-flex justify-content-between">
-                <h1 style={{ paddingTop:"65px" }}>Offers for me</h1>
-                <Dropdown style={{ paddingTop:"65px" }}>
+            <Container style={{ maxWidth:"80%"}} >
+              <div className="d-flex justify-content-between"  style={{ paddingTop:"75px" }}>
+                <h1>Offers for me</h1>
+                <Dropdown >
                   <Dropdown.Toggle variant="primary" id="dropdown-basic">
-                    Filter
+                    {this.state.filterContent}
                   </Dropdown.Toggle>
                   <Dropdown.Menu>
                     <Dropdown.Item onClick={()=>{
-                        this.setState({offerFilterState:1});
+                        this.setState({offerFilterState:1});this.setState({filterContent:"Pending"});
                         this.getOwnerTx(this.state.account,1,4,1)}}>Pending</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
-                        this.setState({offerFilterState:0});
+                        this.setState({offerFilterState:0});this.setState({filterContent:"Success"});
                         this.getOwnerTx(this.state.account,1,4,0)}}>Success</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
-                        this.setState({offerFilterState:-1});
+                        this.setState({offerFilterState:-1});this.setState({filterContent:"Declined"});
                         this.getOwnerTx(this.state.account,1,4,-1)}}>Declined</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
-                        this.setState({offerFilterState:-2});
+                        this.setState({offerFilterState:-2});this.setState({filterContent:"Cancelled"});
                         this.getOwnerTx(this.state.account,1,4,-2)}}>Cancelled</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
-                        this.setState({offerFilterState:-3});
+                        this.setState({offerFilterState:-3});this.setState({filterContent:"Expired"});
                         this.getOwnerTx(this.state.account,1,4,-3)}}>Expired</Dropdown.Item>
                   </Dropdown.Menu>
                 </Dropdown>
@@ -414,7 +417,7 @@ class Trades extends React.Component {
                     } 
                     return(
                       <main>
-                      <div class="card m-3">
+                      <div class="card m-2">
                         <div class="card-body row d-flex" style={{ padding:"10px"}}>
                           <div className="col-2">
                             {offer.loading?
@@ -451,33 +454,34 @@ class Trades extends React.Component {
               }
             </Container>
           </div>
+
           <div  className="tab-pane fade" id="v-pills-launches" role="tabpanel" aria-labelledby="v-pills-launches-tab">
-            <Container style={{ maxWidth:"70%"}}>  
+            <Container style={{ maxWidth:"80%"}}>  
               {/* My launch */}
-              <div className="d-flex justify-content-between">
-              <h1 style={{ paddingTop:"76px" }}>Launched by me</h1>
-                <Dropdown style={{ paddingTop:"76px" }}>
+              <div className="d-flex justify-content-between" style={{ paddingTop:"75px" }}>
+              <h1 >Launched by me</h1>
+                <Dropdown>
                     <Dropdown.Toggle variant="primary" id="dropdown-basic">
-                      Filter
+                      {this.state.filterContent}
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
                       <Dropdown.Item onClick={()=>{
-                          this.setState({launchFilterState:2});
-                          this.getPurchaserTx(this.state.account,1,4,2)}}>Sign</Dropdown.Item>
-                      <Dropdown.Item onClick={()=>{
-                          this.setState({launchFilterState:1});
+                          this.setState({launchFilterState:1});this.setState({filterContent:"Pending"})
                           this.getPurchaserTx(this.state.account,1,4,1)}}>Pending</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
-                          this.setState({launchFilterState:0});
+                          this.setState({launchFilterState:0});this.setState({filterContent:"Success"})
                           this.getPurchaserTx(this.state.account,1,4,0)}}>Success</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
-                          this.setState({launchFilterState:-1});
+                          this.setState({launchFilterState:2});this.setState({filterContent:"Signing"})
+                          this.getPurchaserTx(this.state.account,1,4,2)}}>Signing</Dropdown.Item>    
+                      <Dropdown.Item onClick={()=>{
+                          this.setState({launchFilterState:-1});this.setState({filterContent:"Declined"})
                           this.getPurchaserTx(this.state.account,1,4,-1)}}>Declined</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
-                          this.setState({launchFilterState:-2});
+                          this.setState({launchFilterState:-2});this.setState({filterContent:"Cancelled"})
                           this.getPurchaserTx(this.state.account,1,4,-2)}}>Cancelled</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
-                          this.setState({launchFilterState:-3});
+                          this.setState({launchFilterState:-3});this.setState({filterContent:"Expired"})
                           this.getPurchaserTx(this.state.account,1,4,-3)}}>Expired</Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
@@ -488,7 +492,7 @@ class Trades extends React.Component {
                     <span class="visually-hidden">Loading...</span>
                   </div>
                 </div>
-              :<Container className="py-2">
+              :<Container>
               <MyPagination
                 totPages={this.state.launchPage.totPages}
                 currentPage={this.state.launchPage.currentPage}
@@ -534,7 +538,7 @@ class Trades extends React.Component {
                   }
                   return(
                     <main>
-                    <div class="card m-3">
+                    <div class="card m-2">
                       <div class="card-body row d-flex" style={{ padding:"10px"}}>
                         <div className="col-2">
                         {offer.loading?

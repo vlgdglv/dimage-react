@@ -25,13 +25,14 @@ class Detail extends React.Component{
       account:'',
       showAlert: false,
       message:'',
-      type:''
+      type:'',
+      imageID:'',
     }
   }
 
   componentDidMount = () => {
-    let id = this.props.location.id
-    // id = 1
+    let id = this.props.match.params.imageID
+    this.setState({imageID:id})
     const account = this.context.account
     this.setState({account})
 
@@ -63,7 +64,12 @@ class Detail extends React.Component{
       }
       this.setState({account})
       this.setState({isMe: account == this.state.image.owner})
-      window.location.reload()
+      // window.location.reload()
+      console.log("Refreshing:" + this.state.imageID)
+      this.props.history.replace({
+        pathname: 'detail',
+        id:`${this.state.imageID}`,
+      })
     });
   }
 

@@ -149,15 +149,19 @@ class Release extends React.Component{
           .then((res) => {
             console.log(res)
             if (res.status) {
-              releaseImage(imageData, true).then((res)=>{
+              releaseImage(imageData).then((res)=>{
+                console.log(res)
                 this.setState({loading: false})
                 if (res.success) {
                   this.setState({imgID : this.state.imgID+1})
-                  this.popAlert("success", "Release successfully! You can check it in your profile/Creation page")
+                  this.popAlert("success", "Release successfully! You can check it in your Profile/Creation page")
                 }else {
                   this.popAlert("danger", res.message)
                 }
-                
+              }).catch((error) => {
+                console.error(error)
+                this.setState({loading: false})
+                this.popAlert("danger","Internal Server Error")
               })
             }else {
               this.setState({loading: false})
@@ -175,7 +179,6 @@ class Release extends React.Component{
       })
     }) 
     .catch((err)=>{ 
-      console.log("nmsl")
       this.setState({loading: false})
       this.popAlert("danger", err.message)
     })

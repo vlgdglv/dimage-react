@@ -10,7 +10,7 @@ class NoWeb3Alt extends React.Component{
     return (
       <Container style={{ paddingTop:"120px", maxWidth:"80%"}}>
         <main className="text-center" >
-          <h1 >One more step to Dimage!</h1>
+          {/* <h1 >One more step to Dimage!</h1> */}
           <h3 className="py-3"> </h3>
           <div class="d-flex align-items-center">
             <h3>Connecting to Ethereum network...</h3>
@@ -34,8 +34,10 @@ class NoWeb3Alt extends React.Component{
           <div className="col">
             <h2>2. &nbsp; </h2>
             <h4>Connect with your account</h4>
-          </div>
-          
+          </div>          
+        </div>
+        <div className="fixed-bottom">
+          <Footer />
         </div>
       </Container>
     )

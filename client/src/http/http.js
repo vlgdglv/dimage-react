@@ -35,6 +35,7 @@ axios.interceptors.response.use(
       //   default:
       //     this.$message.error(error.response.message)
       // }
+      console.error(error)
     }
     return Promise.reject(error)
   }

@@ -2,6 +2,8 @@
 import React, { Component } from "react";
 //react-router
 import { BrowserRouter, Switch, Route } from "react-router-dom";
+
+
 //pages
 import Detail from "./pages/Detail";
 import Home from "./pages/Home";
@@ -41,15 +43,14 @@ class App extends Component {
         })
       })
 
-      // window.ethereum.on('connect', (connectInfo) => {
-      //   console.log("connect info" + connectInfo)
-      // })      
-
       window.ethereum.on('accountsChanged', (account) => {
         // Handle the new account, or lack thereof.
         // "account" will always be an array, but it can be empty.
         console.log("[home]change account:"+account)
         this.setState({account})
+        // this.props.history.push({
+        //   pathname: '/'
+        // })
       });
 
       window.ethereum.on('disconnect', (error)=>{
@@ -73,10 +74,6 @@ class App extends Component {
     }
   };
 
-
-  componentWillUnmount() {
-
-  }
   
   render() {
     // if (!this.state.web3) {
@@ -93,9 +90,9 @@ class App extends Component {
               <Switch>  
                 <Route path="/" exact component={Home}/>
                 <Route path="/release" component={Release} />
-                <Route path="/detail" component={Detail} />
+                <Route path="/detail/:imageID" component={Detail} />
                 <Route path="/profile" component={Profile} />
-                <Route path={["/purchase","/purchase/:imgID"]} component={Purchase} />
+                <Route path="/purchase/:imageID" component={Purchase} />
                 <Route path="/trades" component={Trades} />
                 <Route path="/error" component={Error}/>
                 <Route component={Error} />
@@ -103,7 +100,7 @@ class App extends Component {
             </web3Context.Provider>  
           </BrowserRouter>
         :<NoWeb3Alt/>
-        // : <h2 style={{ paddingTop:"150px", textAlign:"center" }} > Loading Web3, account, and contract... </h2>
+        // :<div></div>
         }
       </div>
     );

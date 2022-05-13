@@ -174,7 +174,7 @@ class Modals extends React.Component{
                   <p style={{marginBottom:"0"}} className="text-primary">{this.props.onTx.imageOwner}</p>
                   <hr></hr>
                   <p style={{marginBottom:"0"}}>SHA3 </p>
-                  <p style={{marginBottom:"0"}} className="text-primary">{this.props.onTx.sha3}</p>
+                  <p style={{marginBottom:"0"}} className="text-primary text-break">{this.props.onTx.sha3}</p>
                   
                 </div>
               </div>

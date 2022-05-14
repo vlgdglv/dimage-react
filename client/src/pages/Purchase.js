@@ -2,14 +2,14 @@ import React from "react";
 import { Card, Container, Form } from "react-bootstrap";
 import CardHeader from "react-bootstrap/esm/CardHeader";
 
-import { newPurchase } from "../http/purchase";
+import { newPurchase,getPrevOwner } from "../http/purchase";
 
 import AccountInfo from "../components/AccountInfo";
 import { getImageByID, getThumbnail } from "../http/image";
 
 //web3
 import { web3Context } from '../context/web3Context';
-import ContractPurchase from '../abis/Purchase.json'
+import ContractPurchase from '../abis/Purchase.json';
 import ContractRelease from "../abis/Release.json";
 //Footer
 import Footer from "../components/Footer";
@@ -20,7 +20,6 @@ const moment = require('moment')
 class Purchase extends React.Component{
   
   static contextType = web3Context;
-
   constructor(props) {
     super(props)
     this.state = {
@@ -30,11 +29,13 @@ class Purchase extends React.Component{
       imageID:'',
       imgSrc:'',
       releaseAddress:'',
-      authorPercent:0.2,
+      authorPercent:0.3,
+      prevOwnerPercent:0,
       loading:false,
       showAlert:false,
       type:'',
       message:'',
+      prevOwner:[]
     }
   }
 
@@ -57,40 +58,34 @@ class Purchase extends React.Component{
 
   componentDidMount = () => {
     let id = this.props.match.params.imageID
-    // const id=1
     this.setState({imageID:id})
     console.log("purchase id="+id)
-    this.loadBlockchainData(id).then(()=>{
-      // console.log(this.state.authorPercent)
+    this.loadBlockchainData(id).then((res)=>{
+      console.log(this.state.authorPercent)
     })
     
     getImageByID({id:id}).then((res)=> {
       if(res.success) {
-        // console.log(res)
         this.setState({image: res.data })
         this.handleImageSrc(res.data.thumbnailPath)
-        console.log(this.state.image)
+        getPrevOwner({sha3:res.data.sha3}).then(res=>{
+          let polist = res.data
+          const potb=[0.05,0.09,0.12,0.14,0.15]
+          this.setState({prevOwner: polist})
+          this.setState({prevOwnerPercent:potb[polist.length-1]})
+        })
       }
-    })
-    // console.log(this.state.image)  
+    })  
     const account = this.context.account
     this.setState({account})
     const web3 = this.context.web3
     this.setState({web3})
-    // let balance = this.context.balance
-    // this.setState({balance})
-
-    // console.log("balance = "+balance)
+    console.log(this.state.account)
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
-      console.log("[purchase]"+balance)
+      // console.log("[purchase]"+balance)
     })
 
-    web3.eth.net.getId().then((netID) => {
-      this.setState({netID})
-      // console.log(netID)
-    })
-    
     window.ethereum.on('accountsChanged', (account) => {
       console.log("[release]change account:"+account)
       account = account.toString()
@@ -107,19 +102,23 @@ class Purchase extends React.Component{
   }
 
   handlePurchaseSumbit = (event) => {
+    if(this.state.image.owner == this.state.account){
+      alert('You are the owner');
+      return
+    }
     event.preventDefault()
     this.setState({loading: true})
     const web3 = this.context.web3;
     let offerAmount = this.offerAmount.value
     const authorPercent = this.state.authorPercent;
+    const prevOwnerPercent = this.state.prevOwnerPercent;
     let authorShare = Number(offerAmount) * authorPercent;
-    let ownerShare  = Number(offerAmount) * (1.0 - authorPercent - 0.15)
+    let ownerShare  = Number(offerAmount) * (1.0 - authorPercent - prevOwnerPercent)
 
     offerAmount = web3.utils.toWei(offerAmount, 'Ether')
 
     let contractInstance = new web3.eth.Contract(ContractPurchase.abi)
     
-    // const releaseNetworkData = ContractRelease.networks[this.state.netID]
     const releaseAddress = this.state.releaseAddress
     console.log("release addr = " + releaseAddress)
     const imageID = this.state.image.imageID;
@@ -231,6 +230,25 @@ class Purchase extends React.Component{
                   <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.author}</p>
                   <h5 className="mx-3">Owner</h5>
                   <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.owner}</p>
+
+                  <a class="btn btn-link" type="button" 
+                    data-bs-toggle="collapse" data-bs-target="#collapseprevOwner" aria-expanded="false" aria-controls="collapseprevOwner">
+                      Previous Owners?
+                  </a>
+                  <div className="collapse " id="collapseprevOwner">
+                    {this.state.prevOwner.length==0?
+                    <h6 className="mx-3" style={{color:"#00CED1"}}>No previous owner</h6>
+                    :this.state.prevOwner.map((po,index)=>{
+                        return(
+                          <div>
+                            <h6 className="mx-3" style={{color:"#00CED1"}}>Previous Owner #{index+1}</h6>
+                            <p className="mx-2 bg-light border rounded text-center text-truncate">{po}</p>    
+                          </div>
+                        )
+                      })
+                    }
+                    
+                  </div>
               </div>
               <AccountInfo account={this.state.account} balance={this.state.balance}/>
             </div>
@@ -278,7 +296,6 @@ class Purchase extends React.Component{
             </form>
             <div style={{ marginTop:"20px"}}>
               {
-                
                   this.state.loading ?
                   <div class="d-flex align-items-center justify-content-center">
                     <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>

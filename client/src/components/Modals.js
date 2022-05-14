@@ -42,7 +42,7 @@ class Modals extends React.Component{
                     </div>
                     <div>
                       <span>Previous owners' reward: </span>
-                      <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.offer*0.15).toFixed(6)} ETH</span>
+                      <span style={{ color:"#8B7500",maxWidth:"10px"}}>{Number(this.props.onTx.prevOwnerShare).toFixed(6)} ETH</span>
                     </div>
                     <div>
                       <span>Your Share : </span>
@@ -171,7 +171,7 @@ class Modals extends React.Component{
                   <p style={{marginBottom:"0"}} className="text-primary">{this.props.onTx.imageAuthor}</p>
                   <hr></hr>
                   <p style={{marginBottom:"0"}}>Owner (me)</p>
-                  <p style={{marginBottom:"0"}} className="text-primary">{this.props.onTx.imageOwner}</p>
+                  <p style={{marginBottom:"0"}} className="text-primary">{this.props.onTx.purchaser}</p>
                   <hr></hr>
                   <p style={{marginBottom:"0"}}>SHA3 </p>
                   <p style={{marginBottom:"0"}} className="text-primary text-break">{this.props.onTx.sha3}</p>

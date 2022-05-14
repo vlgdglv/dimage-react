@@ -190,7 +190,9 @@ class Detail extends React.Component{
           </div>
           <div className="col-md-4 col-lg-4 order-md-last" >
             <div className="border rounded ">  
-              <h5 className="my-3 text-center" >Image Info</h5>
+              <h5 className="my-3 text-center" >Image Info</h5>                  
+              <h5 className="mx-3">Image ID</h5>
+                <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.imageID}</p>
               <h5 className="mx-3" style={{ color:"#228B22"}}>Author &nbsp; 
               { this.state.account == this.state.image.author?<span class="badge bg-primary">me</span>:<span></span>}
               </h5>

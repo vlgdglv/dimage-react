@@ -1,8 +1,11 @@
 import React from "react";
 import { Container,Dropdown } from "react-bootstrap";
+
 import { web3Context } from "../context/web3Context";
-import ContractRelease from '../abis/Release.json'
+import ContractRelease from '../abis/Release.json';
+import ContractPurchase from '../abis/Purchase.json';
 import MyPagination from "../components/MyPagination";
+import AccountInfo from "../components/AccountInfo";
 import Modals from "../components/Modals";
 import { getTxByOwner, getTxByPurchaser } from '../http/purchase'
 import { getThumbnailByID } from "../http/image";
@@ -35,9 +38,10 @@ class Trades extends React.Component {
       release:'',
       currentPage:1,
       totPages:5,
-      offerFilterState:1,
-      launchFilterState:1,
-      filterContent:'Pending',
+      offerFilterState:3,
+      launchFilterState:3,
+      filterContent:'All',
+      loading: false
     }
   }  
 
@@ -48,7 +52,6 @@ class Trades extends React.Component {
     if (releaseNetworkData) {
       const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
       this.setState({ release })
-
     }
   }
 
@@ -68,10 +71,13 @@ class Trades extends React.Component {
         console.log(offers)
         offers.map((each) => {
           const web3 = this.context.web3
+          let pos = Number(each.offer)-Number(each.authorShare)-Number(each.ownerShare)
           each.offer = web3.utils.fromWei(each.offer)
           each.authorShare = web3.utils.fromWei(each.authorShare)
           each.ownerShare = web3.utils.fromWei(each.ownerShare)
+          each.prevOwnerShare = web3.utils.fromWei(pos.toString())
           each.id = each.imageID
+ 
           each.loading = true
           each.imgSrc = ''
         })
@@ -101,9 +107,11 @@ class Trades extends React.Component {
         console.log(launches)
         launches.map((each) => {
           const web3 = this.context.web3
+          let pos = Number(each.offer)-Number(each.authorShare)-Number(each.ownerShare)
           each.offer = web3.utils.fromWei(each.offer)
           each.authorShare = web3.utils.fromWei(each.authorShare)
           each.ownerShare = web3.utils.fromWei(each.ownerShare)
+          each.prevOwnerShare = web3.utils.fromWei(pos.toString())
           each.id = each.imageID
           each.loading = true
           each.imgSrc = ''
@@ -124,6 +132,11 @@ class Trades extends React.Component {
   componentDidMount = () => {
     const account = this.context.account
     this.setState({account})
+    console.log(this.state.account)
+    const web3 = this.context.web3
+    web3.eth.getBalance(account).then((balance)=>{
+      this.setState({balance: web3.utils.fromWei(balance)})
+    })
     window.ethereum.on('accountsChanged', (account) => {
       console.log("[trade]change account:"+account)
       account = account.toString()
@@ -131,168 +144,174 @@ class Trades extends React.Component {
         this.props.history.push('/error')
       }
       this.setState({account})
-      window.location.reload()
+      web3.eth.getBalance(account).then((balance)=>{
+        this.setState({balance: web3.utils.fromWei(balance)})
+      })
     });
-    this.setState({offerFilterState:1})
-    this.setState({launchFilterState:1})
-    this.getOwnerTx(account,1,4,1);
-    this.getPurchaserTx(account,1,4,1);
+    this.getOwnerTx(account,1,4,3);
+    this.getPurchaserTx(account,1,4,3);
   }
 
   handleConfirm = (event) => {
     event.preventDefault()
-    // console.log(event.target.id);
+    this.setState({loading:true})
     const tx = this.state.onTx
     const idx = event.target.id;
     const contractAddress = tx.contractAddress;
     const web3 = this.context.web3;
-    updateTx({
-      contractAddress: tx.contractAddress,
-      from: this.context.account,
-      oldState: 1,
-      newState: 2,
-    }).then((res)=>{
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
+    contractInstance.methods.confirmPurchase().send({from:this.context.account})
+    .then((res)=>{
       console.log(res)
+      if (res.status){
+        updateTx({
+          contractAddress: tx.contractAddress,
+          from: this.context.account,
+          oldState: 1,
+          newState: 2,
+        }).then((res)=>{
+          console.log(res)
+          let offers = this.state.offers;
+          offers[idx].state = 2 
+          this.setState({loading:false})
+          this.setState({offers: offers})
+        }).catch((err) => {
+          let offers = this.state.offers;
+          offers[idx].state = -9 
+          this.setState({loading:false})
+          this.setState({offers: offers})
+        })
+      }
+    }).catch((err) => {
       let offers = this.state.offers;
-      offers[idx].state = 2 
-      console.log(offers)
+      offers[idx].state = -9 
+      this.setState({loading:false})
       this.setState({offers: offers})
     })
-    // let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-    // contractInstance.methods.confirmPurchase().send({from:this.context.account})
-    // .then((res)=>{
-    //   console.log(res)
-    //   if (res.status){
-    //     updateTx({
-    //       contractAddress: tx.contractAddress,
-    //       from: this.context.account,
-    //       oldState: 1,
-    //       newState: 2,
-    //     }).then((res)=>{
-    //       console.log(res)
-    //       const offers = this.setState.offers;
-    //       offers[idx] = res.data
-    //       console.log(offers)
-    //       this.setState({offers})
-    //     })
-    //   }
-    // })
   }
 
   handleDecline = (event) => {
     event.preventDefault()
-    console.log(event.target.id);
+    this.setState({loading:true})
     const tx = this.state.onTx
     const idx = event.target.id;
     const contractAddress = tx.contractAddress;
     const web3 = this.context.web3;
-    updateTx({
-      contractAddress: tx.contractAddress,
-      from: this.context.account,
-      oldState: tx.state,
-      newState:-1,
-    }).then((res)=>{
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
+    contractInstance.methods.confirmPurchase().send({from:this.context.account})
+    .then((res)=>{
       console.log(res)
+      if (res.status){
+        updateTx({
+          contractAddress: tx.contractAddress,
+          from: this.context.account,
+          oldState: tx.state,
+          newState:-1,
+        }).then((res)=>{
+          console.log(res)
+          let offers = this.state.offers;
+          offers[idx].state = -1
+          console.log(offers)
+          this.setState({offers: offers})
+        }).catch((err) => {
+          let offers = this.state.offers;
+          offers[idx].state = -9 
+          this.setState({loading:false})
+          this.setState({offers: offers})
+        })
+      }
+    }).catch((err) => {
       let offers = this.state.offers;
-      offers[idx].state = -1
-      console.log(offers)
+      offers[idx].state = -9 
+      this.setState({loading:false})
       this.setState({offers: offers})
     })
-    // let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-    // contractInstance.methods.confirmPurchase().send({from:this.context.account})
-    // .then((res)=>{
-    //   console.log(res)
-    //   if (res.status){
-    //     updateTx({
-    //       contractAddress: tx.contractAddress,
-    //       from: this.context.account,
-    //       oldState: 1,
-    //       newState: 2,
-    //     }).then((res)=>{
-    //       console.log(res)
-    //       const offers = this.setState.offers;
-    //       offers[idx] = res.data
-    //       console.log(offers)
-    //       this.setState({offers})
-    //     })
-    //   }
-    // })
   }
 
   handleCancel = (event) => {
     event.preventDefault()
-    console.log(event.target.id);
+    this.setState({loading:true})
     const tx = this.state.onTx
-    console.log(tx)
+    // console.log(tx)
     const idx = event.target.id;
     const contractAddress = tx.contractAddress;
     const web3 = this.context.web3;
-    updateTx({
-      contractAddress: tx.contractAddress,
-      from: this.context.account,
-      oldState: tx.state,
-      newState:-2,
-    }).then((res)=>{
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
+    contractInstance.methods.confirmPurchase().send({from:this.context.account})
+    .then((res)=>{
       console.log(res)
-      let launches = this.state.launches;
-      launches[idx].state = -2
-      console.log(launches)
-      this.setState({launches: launches})
+      if (res.status){
+        updateTx({
+          contractAddress: tx.contractAddress,
+          from: this.context.account,
+          oldState: tx.state,
+          newState:-2,
+        }).then((res)=>{
+          console.log(res)
+          let launches = this.state.launches;
+          launches[idx].state = -2
+          this.setState({loading:false})
+          this.setState({launches: launches})
+        }).catch((err) => {
+          let launches = this.state.launches;
+          launches[idx].state = -9 
+          this.setState({loading:false})
+          this.setState({launches: launches})
+        })
+      }
+    }).catch((err) => {
+      let offers = this.state.offers;
+      offers[idx].state = -9 
+      this.setState({loading:false})
+      this.setState({offers: offers})
     })
-    // let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-    // contractInstance.methods.confirmPurchase().send({from:this.context.account})
-    // .then((res)=>{
-    //   console.log(res)
-    //   if (res.status){
-    //     updateTx({
-    //       contractAddress: tx.contractAddress,
-    //       from: this.context.account,
-    //       oldState: 1,
-    //       newState: 2,
-    //     }).then((res)=>{
-    //       console.log(res)
-    //       const offers = this.setState.offers;
-    //       offers[idx] = res.data
-    //       console.log(offers)
-    //       this.setState({offers})
-    //     })
-    //   }
-    // })
   }
 
   handleSign = (event) => {
     event.preventDefault()
-    // console.log(event.target.id)
+    this.setState({loading:true})
     let web3 = this.context.web3;
-    let sha3 = "0x5d663a51e6a9748e1abff82c9097f69b568040fd87c1be7e162acb5059de9794"
-    let imageID = event.target.id
-    const tx = this.state.onTx
+    const tx = this.state.onTx;
+    console.log(tx)
+    const imageID = tx.imageID;
+    const sha3 = tx.sha3
     const idx = event.target.id;
     const contractAddress = tx.contractAddress;
-    updateTx({
-      contractAddress: tx.contractAddress,
-      from: this.context.account,
-      oldState: tx.state,
-      newState:0,
-    }).then((res)=>{
-      console.log(res)
+    this.loadBlockchainData().then(() => {
+      const release = this.state.release
+      web3.eth.sign(sha3, this.context.account).then((result)=>{
+        result = result.toString()
+        console.log(result)
+        release.methods.changeSign(imageID,result)
+        .send({from: this.context.account}).then((res)=> {
+          if (res.status){
+            updateTx({
+              contractAddress: tx.contractAddress,
+              from: this.context.account,
+              oldState: tx.state,
+              newState:0,
+              signature:result,
+            }).then((res)=>{
+              let launches = this.state.launches;
+              launches[idx].state = 0
+              this.setState({loading:false})
+              this.setState({launches: launches})
+            })
+          }
+        })
+      }).catch((err) => {
+        let launches = this.state.launches;
+        launches[idx].state = -9 
+        this.setState({loading:false})
+        this.setState({launches: launches})
+      })
+    }).catch((err) => {
+      this.setState({loading:false})
       let launches = this.state.launches;
-      launches[idx].state = 0
+      launches[idx].state = -9 
       console.log(launches)
       this.setState({launches: launches})
     })
-
-    // this.loadBlockchainData().then(() => {
-    //   const release = this.state.release
-    //   web3.eth.sign(sha3, this.context.account).then((result)=>{
-    //     result = result.toString()
-    //     console.log(result)
-    //     release.methods.changeSign(imageID,result)
-    //     .send({from: this.context.account}).then((res)=> {
-          
-    //     })
-    //   })
-    // })
   }
   
   handleOfferPageChange = (ele) => {
@@ -301,6 +320,13 @@ class Trades extends React.Component {
 
   handleLaunchPageChange = (ele) => {
     this.getPurchaserTx(this.state.account, ele,4, this.state.launchFilterState);
+  }
+
+  handleTxClick = (event) => {
+    event.preventDefault()
+    console.log(event.target)
+    const txID = event.target.id
+    this.props.history.push({pathname:"/tx/"+txID})
   }
 
   async handleImageSrc (id)  {
@@ -339,6 +365,22 @@ class Trades extends React.Component {
               data-bs-toggle="pill" data-bs-target="#v-pills-launches" type="button" 
               role="tab" aria-controls="v-pills-launches" aria-selected="false">Launches</button>
            </div>
+
+           <div style={{width: "250px", padding:"10px", paddingTop:"30px"}}>
+            <AccountInfo account={this.state.account} balance={this.state.balance}/>
+          </div>
+
+          <div style={{width: "250px", paddingTop:"50px"}}>
+            {this.state.loading?
+            <div className="d-flex justify-content-center align-text-bottom" >
+              <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+              <div className="mx-1 text-primary">
+                <h4 >Loading...</h4>
+              </div>
+            </div>
+            :<div></div>  
+            }
+          </div>
         </div>
 
         <div className="tab-content" id="v-pills-tabContent" style={{ width:"calc(100vw - 250px)"}}>
@@ -350,7 +392,10 @@ class Trades extends React.Component {
                   <Dropdown.Toggle variant="primary" id="dropdown-basic">
                     {this.state.filterContent}
                   </Dropdown.Toggle>
-                  <Dropdown.Menu>
+                  <Dropdown.Menu> 
+                    <Dropdown.Item onClick={()=>{
+                        this.setState({offerFilterState:3});this.setState({filterContent:"All"});
+                        this.getOwnerTx(this.state.account,1,4,3)}}>All</Dropdown.Item>
                     <Dropdown.Item onClick={()=>{
                         this.setState({offerFilterState:1});this.setState({filterContent:"Pending"});
                         this.getOwnerTx(this.state.account,1,4,1)}}>Pending</Dropdown.Item>
@@ -392,12 +437,9 @@ class Trades extends React.Component {
                     }else if (offer.state == 1) {
                       opGroup=( 
                         <div className="operation1" >
-                          <button className="btn btn-success mx-1" 
-                          data-bs-toggle="modal" data-bs-target="#confirmModal"
-                          onClick={() => {this.setState({onTx: offer});this.setState({onIdx:key})}}>Confirm</button>
-                          <button className="btn btn-secondary mx-1"
-                          data-bs-toggle="modal" data-bs-target="#declineModal"
-                          onClick={() => {this.setState({onTx: offer});this.setState({onIdx:key})}}>Decline</button>
+                          <button className="btn btn-info mx-1"  id={offer.txID}
+                          // data-bs-toggle="modal" data-bs-target="#confirmModal"
+                          onClick={this.handleTxClick}>See Detail</button>
                         </div>)
                       timeGroup =( <div className="m-2 d-flex justify-content-end align-items-end flex-column">
                           <small className="">Launch time: {moment(offer.launchTime).format("YYYY-MM-DD HH:mm:ss")}</small>
@@ -414,7 +456,10 @@ class Trades extends React.Component {
                       opGroup = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
                     }else if (offer.state == -2){
                       opGroup = <div><h5><span class="badge bg-dark">Cancelled</span></h5></div>
-                    } 
+                    }else {
+                      opGroup = <div><h5><span class="badge bg-danger">Error</span></h5></div>
+                    }
+
                     return(
                       <main>
                       <div class="card m-2">
@@ -426,8 +471,13 @@ class Trades extends React.Component {
                                   <span class="visually-hidden">Loading...</span>
                                 </div>
                               </div>
-                              :<img className="border-3 rounded" 
-                              style={{height:"100px", width:"100px",objectFit:"cover"}} src={offer.imgSrc}/>}
+                              :
+                              <div>
+                              <a onClick={this.handleTxClick} style={{ cursor:"pointer" }}>
+                              <img className="border-3 rounded" id={offer.txID  }
+                                style={{height:"100px", width:"100px",objectFit:"cover"}} src={offer.imgSrc}/>
+                              </a></div>}
+                             
                           </div>
                           <div className="col-6">
                             <p style={{marginBottom:"0"}}>Contract Address:</p>
@@ -466,6 +516,9 @@ class Trades extends React.Component {
                     </Dropdown.Toggle>
                     <Dropdown.Menu>
                       <Dropdown.Item onClick={()=>{
+                        this.setState({launchFilterState:3});this.setState({filterContent:"All"});
+                        this.getPurchaserTx(this.state.account,1,4,3)}}>All</Dropdown.Item>
+                      <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:1});this.setState({filterContent:"Pending"})
                           this.getPurchaserTx(this.state.account,1,4,1)}}>Pending</Dropdown.Item>
                       <Dropdown.Item onClick={()=>{
@@ -480,9 +533,6 @@ class Trades extends React.Component {
                       <Dropdown.Item onClick={()=>{
                           this.setState({launchFilterState:-2});this.setState({filterContent:"Cancelled"})
                           this.getPurchaserTx(this.state.account,1,4,-2)}}>Cancelled</Dropdown.Item>
-                      <Dropdown.Item onClick={()=>{
-                          this.setState({launchFilterState:-3});this.setState({filterContent:"Expired"})
-                          this.getPurchaserTx(this.state.account,1,4,-3)}}>Expired</Dropdown.Item>
                     </Dropdown.Menu>
                   </Dropdown>
                 </div>
@@ -535,6 +585,8 @@ class Trades extends React.Component {
                     opGroup = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
                   }else if (offer.state == -2){
                     opGroup = <div><h5><span class="badge bg-dark">Cancelled</span></h5></div>
+                  }else {
+                    opGroup = <div><h5><span class="badge bg-danger">Error</span></h5></div>
                   }
                   return(
                     <main>

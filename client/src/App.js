@@ -6,18 +6,18 @@ import { BrowserRouter, Switch, Route } from "react-router-dom";
 
 //pages
 import Detail from "./pages/Detail";
+import Error from "./pages/Error";
 import Home from "./pages/Home";
+import NoWeb3Alt from "./pages/NoWeb3Alt";
 import Profile from "./pages/Profile";
 import Release from "./pages/Release";
-import Error from "./pages/Error";
-import NoWeb3Alt from "./pages/NoWeb3Alt";
+import Transaction from "./pages/Transaction";
 //components
 import Header from './components/Header';
 //context
 import { web3Context } from "./context/web3Context";
 //web3
 import getWeb3 from "./getWeb3";
-import Web3 from "web3";
 
 import "./App.css";
 import Purchase from "./pages/Purchase";
@@ -93,6 +93,7 @@ class App extends Component {
                 <Route path="/detail/:imageID" component={Detail} />
                 <Route path="/profile" component={Profile} />
                 <Route path="/purchase/:imageID" component={Purchase} />
+                <Route path="/tx/:txID" component={Transaction} />
                 <Route path="/trades" component={Trades} />
                 <Route path="/error" component={Error}/>
                 <Route component={Error} />

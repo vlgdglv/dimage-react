@@ -151,168 +151,6 @@ class Trades extends React.Component {
     this.getOwnerTx(account,1,4,3);
     this.getPurchaserTx(account,1,4,3);
   }
-
-  handleConfirm = (event) => {
-    event.preventDefault()
-    this.setState({loading:true})
-    const tx = this.state.onTx
-    const idx = event.target.id;
-    const contractAddress = tx.contractAddress;
-    const web3 = this.context.web3;
-    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-    contractInstance.methods.confirmPurchase().send({from:this.context.account})
-    .then((res)=>{
-      console.log(res)
-      if (res.status){
-        updateTx({
-          contractAddress: tx.contractAddress,
-          from: this.context.account,
-          oldState: 1,
-          newState: 2,
-        }).then((res)=>{
-          console.log(res)
-          let offers = this.state.offers;
-          offers[idx].state = 2 
-          this.setState({loading:false})
-          this.setState({offers: offers})
-        }).catch((err) => {
-          let offers = this.state.offers;
-          offers[idx].state = -9 
-          this.setState({loading:false})
-          this.setState({offers: offers})
-        })
-      }
-    }).catch((err) => {
-      let offers = this.state.offers;
-      offers[idx].state = -9 
-      this.setState({loading:false})
-      this.setState({offers: offers})
-    })
-  }
-
-  handleDecline = (event) => {
-    event.preventDefault()
-    this.setState({loading:true})
-    const tx = this.state.onTx
-    const idx = event.target.id;
-    const contractAddress = tx.contractAddress;
-    const web3 = this.context.web3;
-    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-    contractInstance.methods.confirmPurchase().send({from:this.context.account})
-    .then((res)=>{
-      console.log(res)
-      if (res.status){
-        updateTx({
-          contractAddress: tx.contractAddress,
-          from: this.context.account,
-          oldState: tx.state,
-          newState:-1,
-        }).then((res)=>{
-          console.log(res)
-          let offers = this.state.offers;
-          offers[idx].state = -1
-          console.log(offers)
-          this.setState({offers: offers})
-        }).catch((err) => {
-          let offers = this.state.offers;
-          offers[idx].state = -9 
-          this.setState({loading:false})
-          this.setState({offers: offers})
-        })
-      }
-    }).catch((err) => {
-      let offers = this.state.offers;
-      offers[idx].state = -9 
-      this.setState({loading:false})
-      this.setState({offers: offers})
-    })
-  }
-
-  handleCancel = (event) => {
-    event.preventDefault()
-    this.setState({loading:true})
-    const tx = this.state.onTx
-    // console.log(tx)
-    const idx = event.target.id;
-    const contractAddress = tx.contractAddress;
-    const web3 = this.context.web3;
-    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-    contractInstance.methods.confirmPurchase().send({from:this.context.account})
-    .then((res)=>{
-      console.log(res)
-      if (res.status){
-        updateTx({
-          contractAddress: tx.contractAddress,
-          from: this.context.account,
-          oldState: tx.state,
-          newState:-2,
-        }).then((res)=>{
-          console.log(res)
-          let launches = this.state.launches;
-          launches[idx].state = -2
-          this.setState({loading:false})
-          this.setState({launches: launches})
-        }).catch((err) => {
-          let launches = this.state.launches;
-          launches[idx].state = -9 
-          this.setState({loading:false})
-          this.setState({launches: launches})
-        })
-      }
-    }).catch((err) => {
-      let offers = this.state.offers;
-      offers[idx].state = -9 
-      this.setState({loading:false})
-      this.setState({offers: offers})
-    })
-  }
-
-  handleSign = (event) => {
-    event.preventDefault()
-    this.setState({loading:true})
-    let web3 = this.context.web3;
-    const tx = this.state.onTx;
-    console.log(tx)
-    const imageID = tx.imageID;
-    const sha3 = tx.sha3
-    const idx = event.target.id;
-    const contractAddress = tx.contractAddress;
-    this.loadBlockchainData().then(() => {
-      const release = this.state.release
-      web3.eth.sign(sha3, this.context.account).then((result)=>{
-        result = result.toString()
-        console.log(result)
-        release.methods.changeSign(imageID,result)
-        .send({from: this.context.account}).then((res)=> {
-          if (res.status){
-            updateTx({
-              contractAddress: tx.contractAddress,
-              from: this.context.account,
-              oldState: tx.state,
-              newState:0,
-              signature:result,
-            }).then((res)=>{
-              let launches = this.state.launches;
-              launches[idx].state = 0
-              this.setState({loading:false})
-              this.setState({launches: launches})
-            })
-          }
-        })
-      }).catch((err) => {
-        let launches = this.state.launches;
-        launches[idx].state = -9 
-        this.setState({loading:false})
-        this.setState({launches: launches})
-      })
-    }).catch((err) => {
-      this.setState({loading:false})
-      let launches = this.state.launches;
-      launches[idx].state = -9 
-      console.log(launches)
-      this.setState({launches: launches})
-    })
-  }
   
   handleOfferPageChange = (ele) => {
     this.getOwnerTx(this.state.account, ele, 4 ,this.state.offerFilterState);
@@ -430,38 +268,9 @@ class Trades extends React.Component {
                 {this.state.offers.length == 0 ?
                   <h3 className="m-3 text-center border rounded bg-light" >No data yet</h3>
                   :this.state.offers.map((offer, key) => {
-                    let opGroup = <div><h5><span class="badge bg-primary">State</span></h5></div>
-                    let timeGroup = <div></div>
-                    if (offer.isClosed == 1 && this.state.offerFilterState ==-3){
-                      opGroup = <div><h5><span class="badge bg-warning text-dark">Expired</span></h5></div>
-                    }else if (offer.state == 1) {
-                      opGroup=( 
-                        <div className="operation1" >
-                          <button className="btn btn-info mx-1"  id={offer.txID}
-                          // data-bs-toggle="modal" data-bs-target="#confirmModal"
-                          onClick={this.handleTxClick}>See Detail</button>
-                        </div>)
-                      timeGroup =( <div className="m-2 d-flex justify-content-end align-items-end flex-column">
-                          <small className="">Launch time: {moment(offer.launchTime).format("YYYY-MM-DD HH:mm:ss")}</small>
-                            <small className="text-danger">End time: {moment(offer.endTime).format("YYYY-MM-DD HH:mm:ss")}</small>      
-                          </div>)  
-
-                    }else if (offer.state == 0 || offer.state == 2){
-                      opGroup = <div className="d-flex align-items-end flex-column">  
-                                  <h5><span class="badge bg-success">Success</span></h5>
-                                  { offer.prevOwnerShareRatio==0? <div></div>:
-                                  <h6><span class="badge bg-info">passive share:{offer.prevOwnerShareRatio}%</span></h6>}
-                                </div>
-                    }else if (offer.state == -1){
-                      opGroup = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
-                    }else if (offer.state == -2){
-                      opGroup = <div><h5><span class="badge bg-dark">Cancelled</span></h5></div>
-                    }else {
-                      opGroup = <div><h5><span class="badge bg-danger">Error</span></h5></div>
-                    }
-
+                
                     return(
-                      <main>
+                      <main key={key}>
                       <div class="card m-2">
                         <div class="card-body row d-flex" style={{ padding:"10px"}}>
                           <div className="col-2">
@@ -474,24 +283,27 @@ class Trades extends React.Component {
                               :
                               <div>
                               <a onClick={this.handleTxClick} style={{ cursor:"pointer" }}>
-                              <img className="border-3 rounded" id={offer.txID  }
-                                style={{height:"100px", width:"100px",objectFit:"cover"}} src={offer.imgSrc}/>
+                                <img className="border-3 rounded" id={offer.txID  }
+                                  style={{height:"100px", width:"100px",objectFit:"cover"}} src={offer.imgSrc}/>
                               </a></div>}
-                             
+
                           </div>
                           <div className="col-6">
                             <p style={{marginBottom:"0"}}>Contract Address:</p>
-                            <p className="text-info text-truncate mb-0">{offer.contractAddress}</p>
+                            <a onClick={this.handleTxClick} style={{ cursor:"pointer" }}>
+                            <p className="text-info text-truncate mb-0" id={offer.txID  }>{offer.contractAddress}</p></a>
                             <p style={{marginBottom:"0"}}>Buyer: </p>
                             <p className="text-secondary text-truncate  mb-0">{offer.purchaser}</p>
                           </div>
                           <div className="col-4">
-                              <div className="m-2 d-flex justify-content-end">
-                              { opGroup}
-                              </div>
-                              <div>
-                              { timeGroup }
-                              </div>
+                            <div className="m-2 d-flex justify-content-end">
+                              <button className="btn btn-info mx-1"  id={offer.txID}
+                              onClick={this.handleTxClick}>See Detail</button>
+                            </div>
+                            <div className="m-2 d-flex justify-content-end align-items-end flex-column">
+                              <small className="">Launch time: {moment(offer.launchTime).format("YYYY-MM-DD HH:mm:ss")}</small>
+                              <small className="text-danger">End time: {moment(offer.endTime).format("YYYY-MM-DD HH:mm:ss")}</small>      
+                            </div>
                             </div>
                           </div>
                         </div>
@@ -551,43 +363,7 @@ class Trades extends React.Component {
               {this.state.launches.length == 0 ?
                 <h3 className="m-3 text-center border rounded bg-light">No data yet</h3>
                 :this.state.launches.map((offer, key) => {
-                  let opGroup = ( 
-                        <div className="d-flex justify-content-end align-items-end flex-column">
-                          <h5><span class="badge bg-primary">almost success</span></h5>
-                          <button className="btn btn-outline-dark" id={offer.imageID}
-                            onClick={this.handleSign}>Sign Your Image</button>
-                        </div>
-                      )
-                  let timeGroup = <div></div> 
-                  if (offer.isClosed == 1 && this.state.launchFilterState == -3){
-                    opGroup = <div><h5><span class="badge bg-warning text-dark">Expired</span></h5></div>
-                  }else if (offer.state == 1) {
-                    opGroup=( 
-                      <div className="d-flex justify-content-end align-items-end flex-column">
-                      <button className="btn btn-danger mx-1"
-                      data-bs-toggle="modal" data-bs-target="#cancelModal"
-                      onClick={() => {this.setState({onTx: offer});this.setState({onIdx:key})}}>Cancel</button>
-                    </div>)
-                    timeGroup =( <div className="m-2 d-flex justify-content-end align-items-end flex-column">
-                      <small className="">Launch time: {moment(offer.launchTime).format("YYYY-MM-DD HH:mm:ss")}</small>
-                      <small className="text-danger">End time: {moment(offer.endTime).format("YYYY-MM-DD HH:mm:ss")}</small>      
-                    </div>)  
-                  }else if (offer.state == 0) {
-                    opGroup = <div><h5><span class="badge bg-success">Success</span></h5></div>
-                  }else if (offer.state == 2){
-                    opGroup = (
-                      <div className="d-flex justify-content-end align-items-end flex-column">
-                        <button className="btn btn-primary mx-1"
-                        data-bs-toggle="modal" data-bs-target="#signModal"
-                        onClick={() => {this.setState({onTx: offer});this.setState({onIdx:key})}}>Sign Your Image</button>
-                      </div>)
-                  }else if (offer.state == -1){
-                    opGroup = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
-                  }else if (offer.state == -2){
-                    opGroup = <div><h5><span class="badge bg-dark">Cancelled</span></h5></div>
-                  }else {
-                    opGroup = <div><h5><span class="badge bg-danger">Error</span></h5></div>
-                  }
+                  
                   return(
                     <main>
                     <div class="card m-2">
@@ -599,21 +375,30 @@ class Trades extends React.Component {
                                   <span class="visually-hidden">Loading...</span>
                                 </div>
                               </div>
-                              :<img className="border-3 rounded" 
-                              style={{height:"100px", width:"100px",objectFit:"cover"}} src={offer.imgSrc}/>}
+                              :
+                              <div>
+                                <a onClick={this.handleTxClick} style={{ cursor:"pointer" }}>
+                                <img className="border-3 rounded"   id={offer.txID  }
+                                  style={{height:"100px", width:"100px",objectFit:"cover"}} src={offer.imgSrc}/>
+                                </a>
+                              </div>
+                              }
                         </div>
                         <div className="col-6">
                           <p style={{marginBottom:"0"}}>Contract Address:</p>
-                          <p className="text-info text-truncate mb-0">{offer.contractAddress}</p>
+                          <a onClick={this.handleTxClick} style={{ cursor:"pointer" }}>
+                          <p className="text-info text-truncate mb-0" id={offer.txID  }>{offer.contractAddress}</p></a>
                           <p style={{marginBottom:"0"}}>Owner: </p>
                           <p className="text-secondary text-truncate  mb-0">{offer.imageOwner}</p>
                         </div>
                         <div className="col-4">
                             <div className="m-2 d-flex justify-content-end">
-                              {opGroup}
+                              <button className="btn btn-info mx-1"  id={offer.txID}
+                                  onClick={this.handleTxClick}>See Detail</button>
                             </div>
-                            <div>
-                              {timeGroup}
+                            <div className="m-2 d-flex justify-content-end align-items-end flex-column">
+                              <small className="">Launch time: {moment(offer.launchTime).format("YYYY-MM-DD HH:mm:ss")}</small>
+                              <small className="text-danger">End time: {moment(offer.endTime).format("YYYY-MM-DD HH:mm:ss")}</small>      
                             </div>
                           </div>
                         </div>

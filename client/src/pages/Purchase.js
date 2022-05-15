@@ -83,7 +83,6 @@ class Purchase extends React.Component{
     console.log(this.state.account)
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
-      // console.log("[purchase]"+balance)
     })
 
     window.ethereum.on('accountsChanged', (account) => {
@@ -126,15 +125,7 @@ class Purchase extends React.Component{
     const imageAuthor = this.state.image.author;
     const purchaser = this.state.account;
     const sha3 = this.state.image.sha3;
-  
     const duration = 3600;
-    console.log(this.state.image)
-    console.log("ID="+imageID)
-    console.log("imageOwner="+imageOwner)
-    console.log("imageAuthor="+imageAuthor)
-    console.log("purchaser="+purchaser)
-    console.log("sha3="+sha3)
-    let address = null;
     contractInstance.deploy({
       data: ContractPurchase.bytecode,
       arguments: [releaseAddress,imageID,purchaser,duration,sha3],
@@ -209,7 +200,7 @@ class Purchase extends React.Component{
           <div className="row g-3">
             <div className="col-md-8 col-lg-8">
               <Card className="mb-4">
-                <CardHeader > 
+                <CardHeader className="rounded"> 
                 <div className="d-flex column">
                   <h4 className="text-truncate align-middle" style={{maxWidth:"50%", marginBottom:"0"}}>{this.state.image.title}</h4>
                 </div>
@@ -240,7 +231,7 @@ class Purchase extends React.Component{
                     <h6 className="mx-3" style={{color:"#00CED1"}}>No previous owner</h6>
                     :this.state.prevOwner.map((po,index)=>{
                         return(
-                          <div>
+                          <div key={index}>
                             <h6 className="mx-3" style={{color:"#00CED1"}}>Previous Owner #{index+1}</h6>
                             <p className="mx-2 bg-light border rounded text-center text-truncate">{po}</p>    
                           </div>
@@ -255,7 +246,7 @@ class Purchase extends React.Component{
           </div>
 
           <hr></hr>
-          <div className="row g-4">
+          {/* <div className="row g-4">
             <div className="col-md-6 col-lg-6">
 
             </div>
@@ -263,7 +254,7 @@ class Purchase extends React.Component{
 
             </div>
           
-          </div>
+          </div> */}
           <div className="row g-4">
             <div className="col-md-7 col-lg-7 ">
             <h4 className="mb-3">Buy this!</h4>

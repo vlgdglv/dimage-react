@@ -167,9 +167,6 @@ class Modals extends React.Component{
                     <span className="border rounded">{this.props.onTx.imageID}</span>           
                   </div>
                   <hr></hr>
-                  <p style={{marginBottom:"0"}}>Author:</p>
-                  <p style={{marginBottom:"0"}} className="text-primary">{this.props.onTx.imageAuthor}</p>
-                  <hr></hr>
                   <p style={{marginBottom:"0"}}>Owner (me)</p>
                   <p style={{marginBottom:"0"}} className="text-primary">{this.props.onTx.purchaser}</p>
                   <hr></hr>

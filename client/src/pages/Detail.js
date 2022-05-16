@@ -42,11 +42,10 @@ class Detail extends React.Component{
         console.log(res.data)
         this.setState({image: res.data })
         this.handleImageSrc(res.data.thumbnailPath)
-        this.setState({isMe: account == res.data.owner})
+        this.setState({isMe: account.toLowerCase() == res.data.owner})
         // console.log(this.state.image)
       }
     })
-
     getLatestTx({imageID:id}).then((res)=> {
       if (res.success) {
         const web3 = this.context.web3
@@ -57,20 +56,6 @@ class Detail extends React.Component{
         this.setState({latestTx})
       }
     })
-    window.ethereum.on('accountsChanged', (account) => {
-      account = account.toString()
-      if (account === '') {
-        this.props.history.push('/error')
-      }
-      this.setState({account})
-      this.setState({isMe: account == this.state.image.owner})
-      // window.location.reload()
-      console.log("Refreshing:" + this.state.imageID)
-      this.props.history.replace({
-        pathname: 'detail',
-        id:`${this.state.imageID}`,
-      })
-    });
   }
 
   

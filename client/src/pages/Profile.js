@@ -30,26 +30,10 @@ class Profile extends React.Component {
     this.setState({account})
     const web3 = this.context.web3
     this.setState({web3})
-    // let balance = this.context.balance
-    // this.setState({balance})
-    // console.log(web3)
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
       console.log("[profile]"+balance)
     })
-    
-    window.ethereum.on('accountsChanged', (account) => {
-      console.log("[profile]change account:"+account)
-      account = account.toString()
-      if (account === '') {
-        this.props.history.push('/error')
-      }
-      this.setState({account})
-      web3.eth.getBalance(account).then((balance)=>{
-        this.setState({balance: web3.utils.fromWei(balance)})
-      })
-      window.location.reload()
-    });
   }
   
   render() {

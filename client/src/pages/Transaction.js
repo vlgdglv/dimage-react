@@ -2,10 +2,13 @@ import React from 'react'
 import { Container } from 'react-bootstrap'
 import Footer from '../components/Footer'
 import Modals from "../components/Modals";
+import MyAlert from "../components/MyAlert";
 import { getTxByID,getPrevOwner } from '../http/purchase'
 import { getThumbnail } from '../http/image'
 import { web3Context } from "../context/web3Context";
-
+import ContractRelease from '../abis/Release.json';
+import ContractPurchase from '../abis/Purchase.json';
+import { updateTx } from "../http/purchase";
 const moment = require('moment')
 class Transaction extends React.Component {
 
@@ -19,10 +22,16 @@ class Transaction extends React.Component {
       tx:'',
       image:'',
       prevOwner:[],
+      prevOwnerShare:[],
+      poIdx:-1,
       imgSrc:'',
       loadImage: true,
       loaded: false,
+      loading:false,
       title:'',
+      message:'',
+      type:'',
+      showAlert:false,
     }
   }
 
@@ -37,31 +46,38 @@ class Transaction extends React.Component {
       console.log(data)
       const web3 = this.context.web3
       let pos = Number(ptx.offer)-Number(ptx.authorShare)-Number(ptx.ownerShare)
+      const offer = Number(ptx.offer)
       ptx.offer = web3.utils.fromWei(ptx.offer)
       ptx.authorShare = web3.utils.fromWei(ptx.authorShare)
       ptx.ownerShare = web3.utils.fromWei(ptx.ownerShare)
       ptx.prevOwnerShare = web3.utils.fromWei(pos.toString())
-      this.setState({tx:data.ptx,image:data.image, loaded:true })
+      this.setState({tx:data.ptx, image:data.image, offer:offer, loaded:true })
       this.checkAuthority(this.context.account)
       getPrevOwner({sha3:data.image.sha3}).then(res=>{
         let polist = res.data
+        let poslist = []
+        const postb = [0.05,0.04,0.03,0.02,0.01]
+        for(let i=0;i<polist.length;i++) { poslist.push(web3.utils.fromWei((offer*postb[i]).toPrecision())) }
         const potb=[0.05,0.09,0.12,0.14,0.15]
-        this.setState({prevOwner: polist, prevOwnerPercent:potb[polist.length-1]})
+        let index=-1
+        for(let i=0;i<polist.length;i++) {
+          if (polist[i].toLowerCase() == this.context.account.toLowerCase()) {index=i;break;}
+        }
+        this.setState({prevOwner: polist, prevOwnerPercent:potb[polist.length-1], prevOwnerShare:poslist,poIdx:index})
       })
       this.handleImageSrc(data.image.thumbnailPath)
-      window.ethereum.on('accountsChanged', (account) => {
-        account = account.toString()
-        if (account === '') {
-          this.props.history.push('/error')
-        }
-        this.setState({account})
-        this.checkAuthority(account)
-        web3.eth.getBalance(account).then((balance)=>{
-          this.setState({balance: web3.utils.fromWei(balance)})
-          console.log("[tx]"+balance)
-        })
-      });
+
     })    
+  }
+
+  async loadBlockchainData() {
+    const web3 = this.context.web3
+    const networkId = await web3.eth.net.getId()
+    const releaseNetworkData = ContractRelease.networks[networkId]
+    if (releaseNetworkData) {
+      const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
+      this.setState({ release })
+    }
   }
 
   checkAuthority = (account) => {
@@ -92,188 +108,165 @@ class Transaction extends React.Component {
   }
 
   handleConfirm = () => {
-
-    console.log("confirming")
+    this.setState({loading:true})
+    const web3 = this.context.web3;
+    const tx = this.state.tx;
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, tx.contractAddress);
+    contractInstance.methods.confirmPurchase().send({from:this.context.account})
+    .then((res)=>{
+      if (res.status){
+        updateTx({
+          contractAddress: tx.contractAddress,
+          from: this.context.account,
+          oldState: 1,
+          newState: 2,
+        }).then((res)=>{
+          this.setState({loading:false})
+          if(res.success){
+            const tx = this.state.tx
+            let prevOwner = this.state.prevOwner
+            tx.state = 2
+            prevOwner = [this.context.account, ... prevOwner]
+            this.setState({tx:tx, prevOwner:prevOwner})
+            this.setState({showAlert:true,type:"success",message:"confirmed!"})
+          }else{
+            this.setState({showAlert:true,type:"danger",message:res.message})
+          }
+        }).catch((err) => {
+          this.setState({loading:false})
+          this.setState({showAlert:true,type:"danger",message:err})
+        })
+      }
+    }).catch((err) => {
+      this.setState({loading:false})
+      this.setState({showAlert:true,type:"danger",message:err.message})
+    })
   }
 
   handleDecline = () => {
     console.log("declining")
   }
 
+  handleDecline = () => {
+    this.setState({loading:true})
+    const web3 = this.context.web3;
+    const tx = this.state.tx;
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, tx.contractAddress);
+    contractInstance.methods.declinePurchase().send({from:this.context.account})
+    .then((res)=>{
+      console.log(res)
+      if (res.status){
+        updateTx({
+          contractAddress: tx.contractAddress,
+          from: this.context.account,
+          oldState: tx.state,
+          newState:-1,
+        }).then((res)=>{
+          this.setState({loading:false})
+          if(res.success){
+            const tx = this.state.tx
+            tx.state = -1
+            this.setState({showAlert:true,type:"success",message:"declined!"})
+          }else{
+            this.setState({showAlert:true,type:"danger",message:res.message})
+          }
+        }).catch((err) => {
+          this.setState({loading:false})
+          this.setState({showAlert:true,type:"danger",message:err})
+        })
+      }
+    }).catch((err) => {
+      this.setState({loading:false})
+      this.setState({showAlert:true,type:"danger",message:err.message})
+    })
+  }
+
   handleCancel = () => {
-    console.log("cancelling")
+    this.setState({loading:true})
+    const web3 = this.context.web3;
+    const tx = this.state.tx;
+    let contractInstance = new web3.eth.Contract(ContractPurchase.abi, tx.contractAddress);
+    contractInstance.methods.cancelPurchase().send({from:this.context.account})
+    .then((res)=>{
+      if (res.status){
+        updateTx({
+          contractAddress: tx.contractAddress,
+          from: this.context.account,
+          oldState: tx.state,
+          newState:-2,
+        }).then((res)=>{
+          this.setState({loading:false})
+          if(res.success){
+            const tx = this.state.tx
+            tx.state = -2
+            this.setState({showAlert:true,type:"success",message:"cancelled!"})
+          }else{
+            this.setState({showAlert:true,type:"danger",message:res.message})
+          }
+        }).catch((err) => {
+          this.setState({loading:false})
+          this.setState({showAlert:true,type:"danger",message:err})
+        })
+      }
+    }).catch((err) => {
+      this.setState({loading:false})
+      this.setState({showAlert:true,type:"danger",message:err.message})
+    })
   }
 
   handleSign = () => {
-    console.log("signing")
+    this.setState({loading:true})
+    let web3 = this.context.web3;
+    const tx = this.state.tx;
+    const imageID = tx.imageID;
+    const sha3 = tx.sha3
+    this.loadBlockchainData().then(() => {
+      const release = this.state.release
+      web3.eth.sign(sha3, this.context.account).then((result)=>{
+        result = result.toString()
+        console.log(result)
+        release.methods.changeSign(imageID,result)
+        .send({from: this.context.account})
+        .on('error',(error) => {
+          this.setState({loading: false})
+          this.popAlert("danger",error.message)
+        })
+        .then((res)=> {
+          if (res.status){
+            updateTx({
+              contractAddress: tx.contractAddress,
+              from: this.context.account,
+              oldState: tx.state,
+              newState:0,
+              signature:result,
+            }).then((res)=>{
+              this.setState({loading:false})
+              if(res.success){
+                const tx = this.state.tx
+                tx.state = 0
+                this.setState({showAlert:true,type:"success",message:"signature updated!"})
+              }else{
+                this.setState({showAlert:true,type:"danger",message:res.message})
+              }
+            })
+          }
+        })
+
+      }).catch((err) => {
+        this.setState({loading:false})
+        this.popAlert("danger",err)
+      })
+    }).catch((err) => {
+      this.setState({loading:false})
+      this.popAlert("danger",err.message)
+    })
   }
 
-  // handleConfirm = (event) => {
-  //   event.preventDefault()
-  //   this.setState({loading:true})
-  //   const tx = this.state.onTx
-  //   const idx = event.target.id;
-  //   const contractAddress = tx.contractAddress;
-  //   const web3 = this.context.web3;
-  //   let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-  //   contractInstance.methods.confirmPurchase().send({from:this.context.account})
-  //   .then((res)=>{
-  //     console.log(res)
-  //     if (res.status){
-  //       updateTx({
-  //         contractAddress: tx.contractAddress,
-  //         from: this.context.account,
-  //         oldState: 1,
-  //         newState: 2,
-  //       }).then((res)=>{
-  //         console.log(res)
-  //         let offers = this.state.offers;
-  //         offers[idx].state = 2 
-  //         this.setState({loading:false})
-  //         this.setState({offers: offers})
-  //       }).catch((err) => {
-  //         let offers = this.state.offers;
-  //         offers[idx].state = -9 
-  //         this.setState({loading:false})
-  //         this.setState({offers: offers})
-  //       })
-  //     }
-  //   }).catch((err) => {
-  //     let offers = this.state.offers;
-  //     offers[idx].state = -9 
-  //     this.setState({loading:false})
-  //     this.setState({offers: offers})
-  //   })
-  // }
+  popAlert = (type,message) => { this.setState({type, message, showAlert:true}) }
 
-  // handleDecline = (event) => {
-  //   event.preventDefault()
-  //   this.setState({loading:true})
-  //   const tx = this.state.onTx
-  //   const idx = event.target.id;
-  //   const contractAddress = tx.contractAddress;
-  //   const web3 = this.context.web3;
-  //   let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-  //   contractInstance.methods.confirmPurchase().send({from:this.context.account})
-  //   .then((res)=>{
-  //     console.log(res)
-  //     if (res.status){
-  //       updateTx({
-  //         contractAddress: tx.contractAddress,
-  //         from: this.context.account,
-  //         oldState: tx.state,
-  //         newState:-1,
-  //       }).then((res)=>{
-  //         console.log(res)
-  //         let offers = this.state.offers;
-  //         offers[idx].state = -1
-  //         console.log(offers)
-  //         this.setState({offers: offers})
-  //       }).catch((err) => {
-  //         let offers = this.state.offers;
-  //         offers[idx].state = -9 
-  //         this.setState({loading:false})
-  //         this.setState({offers: offers})
-  //       })
-  //     }
-  //   }).catch((err) => {
-  //     let offers = this.state.offers;
-  //     offers[idx].state = -9 
-  //     this.setState({loading:false})
-  //     this.setState({offers: offers})
-  //   })
-  // }
-
-  // handleCancel = (event) => {
-  //   event.preventDefault()
-  //   this.setState({loading:true})
-  //   const tx = this.state.onTx
-  //   // console.log(tx)
-  //   const idx = event.target.id;
-  //   const contractAddress = tx.contractAddress;
-  //   const web3 = this.context.web3;
-  //   let contractInstance = new web3.eth.Contract(ContractPurchase.abi, contractAddress);
-  //   contractInstance.methods.confirmPurchase().send({from:this.context.account})
-  //   .then((res)=>{
-  //     console.log(res)
-  //     if (res.status){
-  //       updateTx({
-  //         contractAddress: tx.contractAddress,
-  //         from: this.context.account,
-  //         oldState: tx.state,
-  //         newState:-2,
-  //       }).then((res)=>{
-  //         console.log(res)
-  //         let launches = this.state.launches;
-  //         launches[idx].state = -2
-  //         this.setState({loading:false})
-  //         this.setState({launches: launches})
-  //       }).catch((err) => {
-  //         let launches = this.state.launches;
-  //         launches[idx].state = -9 
-  //         this.setState({loading:false})
-  //         this.setState({launches: launches})
-  //       })
-  //     }
-  //   }).catch((err) => {
-  //     let offers = this.state.offers;
-  //     offers[idx].state = -9 
-  //     this.setState({loading:false})
-  //     this.setState({offers: offers})
-  //   })
-  // }
-
-  // handleSign = (event) => {
-  //   event.preventDefault()
-  //   this.setState({loading:true})
-  //   let web3 = this.context.web3;
-  //   const tx = this.state.onTx;
-  //   console.log(tx)
-  //   const imageID = tx.imageID;
-  //   const sha3 = tx.sha3
-  //   const idx = event.target.id;
-  //   const contractAddress = tx.contractAddress;
-  //   this.loadBlockchainData().then(() => {
-  //     const release = this.state.release
-  //     web3.eth.sign(sha3, this.context.account).then((result)=>{
-  //       result = result.toString()
-  //       console.log(result)
-  //       release.methods.changeSign(imageID,result)
-  //       .send({from: this.context.account}).then((res)=> {
-  //         if (res.status){
-  //           updateTx({
-  //             contractAddress: tx.contractAddress,
-  //             from: this.context.account,
-  //             oldState: tx.state,
-  //             newState:0,
-  //             signature:result,
-  //           }).then((res)=>{
-  //             let launches = this.state.launches;
-  //             launches[idx].state = 0
-  //             this.setState({loading:false})
-  //             this.setState({launches: launches})
-  //           })
-  //         }
-  //       })
-  //     }).catch((err) => {
-  //       let launches = this.state.launches;
-  //       launches[idx].state = -9 
-  //       this.setState({loading:false})
-  //       this.setState({launches: launches})
-  //     })
-  //   }).catch((err) => {
-  //     this.setState({loading:false})
-  //     let launches = this.state.launches;
-  //     launches[idx].state = -9 
-  //     console.log(launches)
-  //     this.setState({launches: launches})
-  //   })
-  // }
+  closeAlert = () => { this.setState({showAlert:false}) }
 
   render() {
-    // let opGroup = (<button className="btn btn-dark disabled">No Operation</button>)
-    // let statusBadge = (<h5><span class="badge bg-primary mx-2 border rounded text-center">status</span></h5>)
-    // let message = "No message"
     let opGroup = <div class="spinner-border text-primary" role="status"></div>
     let statusBadge = <div class="spinner-border text-primary" role="status"></div>
     let message = <div class="spinner-border text-primary my-1" role="status"></div>
@@ -282,9 +275,8 @@ class Transaction extends React.Component {
       // role == 1 offer
       const ptx = this.state.tx;
       const image = this.state.image;
-      const txState = 1;
-      console.log(this.state.tx)
-      console.log(ptx)
+      const txState = ptx.state;
+      opGroup = (<button className="btn btn-dark disabled">No Operation</button>)
       if (this.state.role == 0){
         if ( txState ==  1 ) { 
           if (ptx.imageOwner.toLowerCase() == image.owner.toLowerCase()){
@@ -302,7 +294,7 @@ class Transaction extends React.Component {
           statusBadge = (<h5><span class="badge bg-success rounded">Success</span></h5>)
           message = "You've bought it"
         }else if ( txState == 2) {
-          if (ptx.imageOwner.toLowerCase() == image.owner.toLowerCase()) {
+          if (ptx.purchaser.toLowerCase() == image.owner.toLowerCase()) {
             opGroup = <button className="btn btn-primary mx-1" data-bs-toggle="modal" 
               data-bs-target="#signModal">Sign Your Image</button>
             statusBadge = (<h5><span class="badge rounded" style={{ backgroundColor:"#9ACD32"}}>Half Success</span></h5>)
@@ -340,10 +332,7 @@ class Transaction extends React.Component {
           statusBadge = (<h5><span class="badge bg-success rounded">Success</span></h5>)
           const polist = this.state.prevOwner
           console.log(polist)
-          let index=-1;
-          for(let i=0;i<polist.length;i++) {
-            if (polist[i].toLowerCase() == this.context.account.toLowerCase()) {index=i;break;}
-          }
+          let index=this.state.poIdx;
           if (index != -1 && index < 5) {
             message="You still share " + (5-index) +"% of its turnover"
           }else {
@@ -392,7 +381,7 @@ class Transaction extends React.Component {
                   <span class="badge bg-primary">me</span>:<span></span>}</h5>
                   <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.tx.imageAuthor}</p>
                   <h5 className="mx-3">Offer</h5>
-                  <p className="mx-2 bg-light border rounded text-center text-truncate">{Number(this.state.tx.offer).toFixed(6)} ETH</p>
+                  <p className="mx-2 bg-light border rounded text-center text-truncate">{Number(this.state.tx.offer).toFixed(5)} ETH</p>
                   <h5 className="mx-3">End Time &nbsp;
                   {moment(new Date()).isBefore(this.state.tx.endTime)?
                   <span></span>:<span class="badge bg-warning text-dark">Expired</span> }
@@ -404,23 +393,48 @@ class Transaction extends React.Component {
                   </a>
                   <div className="collapse" id="collapseShare">
                     <div className=''>
-                    {this.state.prevOwner.length==0?
-                    <h6 className="mx-3" style={{color:"#00CED1"}}>No previous owner</h6>
-                    :this.state.prevOwner.map((po,index)=>{
-                        return(
-                          <div key={index}>
-                            <div className='d-flex justify-content-between'>
-                              <h6 className="mx-3 my-1" style={{color:"#00CED1"}}>Previous Owner #{index+1}</h6>
-                              <p className="mx-2  my-1 px-2 bg-light border rounded ">5.0 ETH</p>
+                      <div>
+                        <div className='d-flex justify-content-between bg-light border rounded mx-3 my-1'>
+                          <h6 className="mx-3 my-1">Owner</h6>
+                          <p className="mx-2 my-1 px-2 text-center" 
+                            style={{width:"150px", color:"#8B7500"}}>
+                            {Number(this.state.tx.ownerShare).toFixed(6)} ETH</p>
+                        </div>
+                        <div className='d-flex justify-content-between  bg-light border rounded mx-3 my-1'>
+                          <h6 className="mx-3 my-1">Author</h6>
+                          <p className="mx-2 my-1 px-2 text-center" 
+                            style={{width:"150px", color:"#8B7500"}}>
+                            {Number(this.state.tx.authorShare).toFixed(6)} ETH</p>
+                        </div>
+                      </div>
+                      {this.state.prevOwner.length==0?
+                      <h6 className="mx-3 my-2" style={{color:"#00CED1"}}>No previous owner</h6>
+                      :this.state.prevOwnerShare.map((pos,index)=>{
+                          return(
+                            <div key={index}  className='d-flex justify-content-between bg-light border rounded mx-3 my-1' >
+                              <h6 className="mx-3 my-1" style={{color:"#2F4F4F"}}>Previous Owner #{index+1}</h6>
+                              <p className="mx-2 my-1 px-2 text-center"
+                              style={{width:"150px", color:"#8B7500"}}>{Number(pos).toFixed(6)} ETH</p>
                             </div>
-                            <div className='d-flex justify-content-between'>
-                              <h6 className="mx-3 " style={{color:"#00CED1"}}>Address</h6>
-                              <p className="mx-2 px-2 bg-light border rounded text-center text-truncate">{po}</p>    
-                            </div>
-                          </div>
-                        )
-                      })
-                    }
+                          )
+                        })
+                      }
+                        <a class="btn btn-link" type="button" 
+                          data-bs-toggle="collapse" data-bs-target="#collapseprevOwner" aria-expanded="false" aria-controls="collapseprevOwner">
+                            Previous Owner Address?</a>
+                        <div className="collapse " id="collapseprevOwner">
+                          {this.state.prevOwner.length==0?
+                          <h6 className="mx-3" style={{color:"#00CED1"}}>No previous owner</h6>
+                          :this.state.prevOwner.map((po,index)=>{
+                              return(
+                                <div key={index}>
+                                  <h6 className="mx-3" style={{color:"#00CED1"}}>Previous Owner #{index+1}</h6>
+                                  <p className="mx-2 bg-light border rounded text-center text-truncate">{po}</p>    
+                                </div>
+                              )
+                            })
+                          }
+                        </div>
                     </div>
                   </div>
                 </div>
@@ -444,6 +458,25 @@ class Transaction extends React.Component {
                     <div className=' d-flex justify-content-center mb-3'> 
                       { opGroup }
                     </div>
+
+                    <div className="d-flex align-items-center justify-content-center">
+                      {
+                        this.state.loading ?
+                        <div class="d-flex align-items-center justify-content-center">
+                          <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                          <div className="mx-1 text-primary">
+                            <strong >Processing...</strong>
+                          </div>
+                        </div>
+                        :
+                        <MyAlert 
+                          show={this.state.showAlert} 
+                          message={this.state.message} 
+                          type={this.state.type}
+                          closeAlert={this.closeAlert}/> 
+                        }
+                      </div>
+
                   </div>
                   
                 </div>

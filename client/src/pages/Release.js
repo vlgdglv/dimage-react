@@ -62,20 +62,6 @@ class Release extends React.Component{
       this.setState({balance: web3.utils.fromWei(balance)})
       console.log("[update]"+balance)
     })
-    
-    window.ethereum.on('accountsChanged', (account) => {
-      console.log("[release]change account:"+account)
-      account = account.toString()
-      if (account === '') {
-        this.props.history.push('/error')
-      }
-      this.setState({account})
-      web3.eth.getBalance(account).then((balance)=>{
-        this.setState({balance: web3.utils.fromWei(balance)})
-        console.log("[update]"+balance)
-      })
-    });
-    
   }
 
   async loadBlockchainData() {

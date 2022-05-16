@@ -3,13 +3,11 @@ import { Container,Dropdown } from "react-bootstrap";
 
 import { web3Context } from "../context/web3Context";
 import ContractRelease from '../abis/Release.json';
-import ContractPurchase from '../abis/Purchase.json';
 import MyPagination from "../components/MyPagination";
 import AccountInfo from "../components/AccountInfo";
 import Modals from "../components/Modals";
 import { getTxByOwner, getTxByPurchaser } from '../http/purchase'
 import { getThumbnailByID } from "../http/image";
-import { updateTx } from "../http/purchase";
 const moment = require('moment')
 
 class Trades extends React.Component {
@@ -104,7 +102,7 @@ class Trades extends React.Component {
       if (res.success) {
         let data = res.data
         let launches = data.ptxList
-        console.log(launches)
+        console.log(data)
         launches.map((each) => {
           const web3 = this.context.web3
           let pos = Number(each.offer)-Number(each.authorShare)-Number(each.ownerShare)
@@ -137,17 +135,6 @@ class Trades extends React.Component {
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
     })
-    window.ethereum.on('accountsChanged', (account) => {
-      console.log("[trade]change account:"+account)
-      account = account.toString()
-      if (account === '') {
-        this.props.history.push('/error')
-      }
-      this.setState({account})
-      web3.eth.getBalance(account).then((balance)=>{
-        this.setState({balance: web3.utils.fromWei(balance)})
-      })
-    });
     this.getOwnerTx(account,1,4,3);
     this.getPurchaserTx(account,1,4,3);
   }
@@ -203,11 +190,9 @@ class Trades extends React.Component {
               data-bs-toggle="pill" data-bs-target="#v-pills-launches" type="button" 
               role="tab" aria-controls="v-pills-launches" aria-selected="false">Launches</button>
            </div>
-
            <div style={{width: "250px", padding:"10px", paddingTop:"30px"}}>
             <AccountInfo account={this.state.account} balance={this.state.balance}/>
           </div>
-
           <div style={{width: "250px", paddingTop:"50px"}}>
             {this.state.loading?
             <div className="d-flex justify-content-center align-text-bottom" >
@@ -268,7 +253,18 @@ class Trades extends React.Component {
                 {this.state.offers.length == 0 ?
                   <h3 className="m-3 text-center border rounded bg-light" >No data yet</h3>
                   :this.state.offers.map((offer, key) => {
-                
+                    let badge = <h5><span class="badge bg-primary align-middle">Status</span></h5>
+                    if (offer.isClosed == 1 && this.state.offerFilterState ==-3){
+                      badge = <div><h5><span class="badge bg-warning text-dark">Expired</span></h5></div>
+                    }else if (offer.state == 1) {
+                      badge= <div><h5><span class="badge bg-primary">Pending</span></h5></div>
+                    }else if (offer.state == 0 || offer.state == 2){
+                      badge = <div><h5><span class="badge bg-success">Success</span></h5></div>
+                    }else if (offer.state == -1){
+                      badge = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
+                    }else if (offer.state == -2){
+                      badge = <div><h5><span class="badge bg-dark">Cancelled</span></h5></div>
+                    } 
                     return(
                       <main key={key}>
                       <div class="card m-2">
@@ -296,7 +292,8 @@ class Trades extends React.Component {
                             <p className="text-secondary text-truncate  mb-0">{offer.purchaser}</p>
                           </div>
                           <div className="col-4">
-                            <div className="m-2 d-flex justify-content-end">
+                            <div className="m-2 d-flex justify-content-end align-middle">
+                              {badge}
                               <button className="btn btn-info mx-1"  id={offer.txID}
                               onClick={this.handleTxClick}>See Detail</button>
                             </div>
@@ -363,7 +360,18 @@ class Trades extends React.Component {
               {this.state.launches.length == 0 ?
                 <h3 className="m-3 text-center border rounded bg-light">No data yet</h3>
                 :this.state.launches.map((offer, key) => {
-                  
+                  let badge = <h5><span class="badge bg-primary align-middle">Status</span></h5>
+                    if (offer.state == 1) {
+                      badge= <div><h5><span class="badge bg-primary">Pending</span></h5></div>
+                    }else if (offer.state == 0){
+                      badge = <div><h5><span class="badge bg-success">Success</span></h5></div>
+                    }else if(offer.state == 2){
+                      badge = <h5><span class="badge" style={{ backgroundColor:"#9ACD32"}}>Half Success</span></h5>
+                    }else if (offer.state == -1){
+                      badge = <div><h5><span class="badge bg-secondary">Declined</span></h5></div>
+                    }else if (offer.state == -2){
+                      badge = <div><h5><span class="badge bg-dark">Cancelled</span></h5></div>
+                    } 
                   return(
                     <main>
                     <div class="card m-2">
@@ -393,6 +401,7 @@ class Trades extends React.Component {
                         </div>
                         <div className="col-4">
                             <div className="m-2 d-flex justify-content-end">
+                              {badge}
                               <button className="btn btn-info mx-1"  id={offer.txID}
                                   onClick={this.handleTxClick}>See Detail</button>
                             </div>

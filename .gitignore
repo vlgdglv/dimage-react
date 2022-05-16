@@ -2,6 +2,7 @@
 
 #custom
 /contracts_v1
+*beta
 
 # dependencies
 /node_modules

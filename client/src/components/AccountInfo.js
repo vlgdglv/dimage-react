@@ -8,7 +8,7 @@ const AccountInfo = (props) => {
       <h5 className="mx-3">Address</h5>
       <p className="mx-2 bg-light border rounded text-center text-truncate">{props.account}</p>
       <h5 className="mx-3">Balance</h5>
-      <p className="mx-2 bg-light border rounded text-center text-truncate">{props.balance} ETH</p>
+      <p className="mx-2 bg-light border rounded text-center text-truncate">{Number(props.balance).toFixed(6)} ETH</p>
   </div>
   )
 }

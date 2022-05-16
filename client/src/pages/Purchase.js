@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, Container, Form } from "react-bootstrap";
+import { Card, Container, Form, ThemeProvider } from "react-bootstrap";
 import CardHeader from "react-bootstrap/esm/CardHeader";
 
 import { newPurchase,getPrevOwner } from "../http/purchase";
@@ -28,6 +28,7 @@ class Purchase extends React.Component{
       image: '',
       imageID:'',
       imgSrc:'',
+      isMe:false,
       releaseAddress:'',
       authorPercent:0.3,
       prevOwnerPercent:0,
@@ -60,44 +61,30 @@ class Purchase extends React.Component{
     let id = this.props.match.params.imageID
     this.setState({imageID:id})
     console.log("purchase id="+id)
-    this.loadBlockchainData(id).then((res)=>{
-      console.log(this.state.authorPercent)
-    })
-    
+
+    const account = this.context.account
+    const web3 = this.context.web3
+    this.setState({account:account, web3:web3})
+
+    this.loadBlockchainData(id)
+
     getImageByID({id:id}).then((res)=> {
       if(res.success) {
-        this.setState({image: res.data })
+        this.setState({image: res.data, isMe: account.toLowerCase() == res.data.owner.toLowerCase() })
         this.handleImageSrc(res.data.thumbnailPath)
         getPrevOwner({sha3:res.data.sha3}).then(res=>{
           let polist = res.data
           const potb=[0.05,0.09,0.12,0.14,0.15]
-          this.setState({prevOwner: polist})
-          this.setState({prevOwnerPercent:potb[polist.length-1]})
+          let pop = polist.length == 0? 0 : potb[polist.length-1]
+          this.setState({prevOwner: polist, prevOwnerPercent:pop})
         })
       }
     })  
-    const account = this.context.account
-    this.setState({account})
-    const web3 = this.context.web3
-    this.setState({web3})
-    console.log(this.state.account)
+
+
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
     })
-
-    window.ethereum.on('accountsChanged', (account) => {
-      console.log("[release]change account:"+account)
-      account = account.toString()
-      if (account === '') {
-        this.props.history.push('/error')
-      }
-      this.setState({account})
-      web3.eth.getBalance(account).then((balance)=>{
-        this.setState({balance: web3.utils.fromWei(balance)})
-        console.log("[update]"+balance)
-      })
-    });
-
   }
 
   handlePurchaseSumbit = (event) => {
@@ -113,6 +100,7 @@ class Purchase extends React.Component{
     const prevOwnerPercent = this.state.prevOwnerPercent;
     let authorShare = Number(offerAmount) * authorPercent;
     let ownerShare  = Number(offerAmount) * (1.0 - authorPercent - prevOwnerPercent)
+    console.log(prevOwnerPercent)
 
     offerAmount = web3.utils.toWei(offerAmount, 'Ether')
 
@@ -121,10 +109,10 @@ class Purchase extends React.Component{
     const releaseAddress = this.state.releaseAddress
     console.log("release addr = " + releaseAddress)
     const imageID = this.state.image.imageID;
-    const imageOwner = this.state.image.owner;
-    const imageAuthor = this.state.image.author;
-    const purchaser = this.state.account;
-    const sha3 = this.state.image.sha3;
+    const imageOwner = this.state.image.owner.toLowerCase();
+    const imageAuthor = this.state.image.author.toLowerCase();
+    const purchaser = this.state.account.toLowerCase();
+    const sha3 = this.state.image.sha3.toLowerCase();
     const duration = 3600;
     contractInstance.deploy({
       data: ContractPurchase.bytecode,
@@ -139,14 +127,14 @@ class Purchase extends React.Component{
       const contract = new web3.eth.Contract(ContractPurchase.abi, address)
       console.log(address)
       contract.methods.launchTime().call().then((launchTime) => {
-        console.log(launchTime)
+
         let obj = {
           contractAddress: address,
           purchaser: purchaser,
           imageOwner: imageOwner,
           imageAuthor: imageAuthor,
-          ownerShare: web3.utils.toWei(ownerShare.toString()),
-          authorShare:web3.utils.toWei(authorShare.toString()),
+          ownerShare: web3.utils.toWei(ownerShare.toFixed(7)),
+          authorShare:web3.utils.toWei(authorShare.toFixed(7)),
           sha3:sha3,
           imageID:imageID,
           offer: offerAmount,
@@ -180,9 +168,7 @@ class Purchase extends React.Component{
   }
 
   popAlert = (type,message) => {
-    this.setState({type})
-    this.setState({message})
-    this.setState({showAlert:true})
+    this.setState({type, message, showAlert:true})
   }
 
   closeAlert = () => { 
@@ -222,7 +208,7 @@ class Purchase extends React.Component{
                   <h5 className="mx-3">Owner</h5>
                   <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.owner}</p>
 
-                  <a class="btn btn-link" type="button" 
+                  <a className="btn btn-link" type="button" 
                     data-bs-toggle="collapse" data-bs-target="#collapseprevOwner" aria-expanded="false" aria-controls="collapseprevOwner">
                       Previous Owners?
                   </a>
@@ -244,17 +230,7 @@ class Purchase extends React.Component{
               <AccountInfo account={this.state.account} balance={this.state.balance}/>
             </div>
           </div>
-
           <hr></hr>
-          {/* <div className="row g-4">
-            <div className="col-md-6 col-lg-6">
-
-            </div>
-            <div className="col-md-6 col-lg-6">
-
-            </div>
-          
-          </div> */}
           <div className="row g-4">
             <div className="col-md-7 col-lg-7 ">
             <h4 className="mb-3">Buy this!</h4>
@@ -264,7 +240,7 @@ class Purchase extends React.Component{
                   <div className="row g-3">
                     <div className="col-sm-10" style={{ paddingTop:"0"}}>
                       <input type="number" id="offerAmount"
-                          min="0" max="99" step="0.000001"
+                          min="0" max="99" step="0.00001"
                           className="form-control rounded"
                           required placeholder="input your offer"
                           ref={(input) => {this.offerAmount = input}}
@@ -278,11 +254,15 @@ class Purchase extends React.Component{
               </div>
               <hr style={{ width:"95%"}} ></hr>
               <div style={{ textAlign:"center" }}>
-                  <button 
-                    type="submit" 
-                    className="btn btn-primary"
-                    style={{ width:"50%", height:"50px"}}
-                    >Confirm</button>
+                {
+                  this.state.isMe?
+                  <button className="btn btn-primary disabled"  
+                  style={{ width:"50%", height:"50px"}}>You are the owner</button>
+                  :<button 
+                  type="submit"  className="btn btn-primary"
+                  style={{ width:"50%", height:"50px"}}
+                  >Confirm</button>
+                }
                 </div>
             </form>
             <div style={{ marginTop:"20px"}}>

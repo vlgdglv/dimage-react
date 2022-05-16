@@ -2,8 +2,6 @@
 import React, { Component } from "react";
 //react-router
 import { BrowserRouter, Switch, Route } from "react-router-dom";
-
-
 //pages
 import Detail from "./pages/Detail";
 import Error from "./pages/Error";
@@ -12,6 +10,7 @@ import NoWeb3Alt from "./pages/NoWeb3Alt";
 import Profile from "./pages/Profile";
 import Release from "./pages/Release";
 import Transaction from "./pages/Transaction";
+import PageAccount from "./pages/beta/PageAccount";
 //components
 import Header from './components/Header';
 //context
@@ -48,12 +47,11 @@ class App extends Component {
         // "account" will always be an array, but it can be empty.
         console.log("[home]change account:"+account)
         this.setState({account})
-        // this.props.history.push({
-        //   pathname: '/'
-        // })
+        window.location.reload()
       });
 
       window.ethereum.on('disconnect', (error)=>{
+        
         console.log(error)
       });
     
@@ -76,10 +74,7 @@ class App extends Component {
 
   
   render() {
-    // if (!this.state.web3) {
-    //   return <div>Loading Web3, account, and contract...</div>;
-    // }
-    
+
     return (
       <div className="App">
         <Header />

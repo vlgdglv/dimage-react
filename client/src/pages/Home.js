@@ -34,6 +34,7 @@ class Home extends React.Component{
 
   componentDidMount = () => {
     this.loadImages(1,15,this.state.order) 
+
   }
 
   async loadImages(curPage, pageCount, order) {
@@ -108,9 +109,6 @@ class Home extends React.Component{
             <div className="col-lg-6 col-md-8 mx-auto">
               <h1 className="fw-light">Dimage</h1>
               <p className="lead text-muted">A decentralized image sharing and trading platform</p>
-              {/* <p>
-                <a href="#" className="btn btn-primary my-2">Check it out</a>
-              </p> */}
             </div>
           </div>
         </section>
@@ -153,7 +151,7 @@ class Home extends React.Component{
               <h3 className="m-3 text-center border rounded bg-light" style={{width:"97%"}}>Oops! No image at all</h3>
                :this.state.images.map((image, key) => {
                   return (
-                    <div className="col overflow-hiden rounded" id={key}>
+                    <div className="col overflow-hiden rounded" key={key}>
                       <div className="card shadow">
                         <div className="bd-placeholder-img card-img-top " role="img" preserveAspectRatio="xMidYMid slice" focusable="false">
                           {

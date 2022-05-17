@@ -7,6 +7,8 @@ import { getLatestTx } from "../http/purchase";
 import Footer from "../components/Footer";
 import MyAlert from "../components/MyAlert";
 import { web3Context } from '../context/web3Context';
+
+import ContractRelease from '../abis/Release.json'
 import  Verification  from '../abis/Verification.json';
 require('bootstrap')
 const moment = require('moment')
@@ -22,6 +24,8 @@ class Detail extends React.Component{
       loading: false,
       latestTx:'',
       isMe:false,
+      ipfsHash:'',
+      showIpfs:false,
       account:'',
       showAlert: false,
       message:'',
@@ -54,10 +58,45 @@ class Detail extends React.Component{
           time: res.data.launchTime
         }
         this.setState({latestTx})
+      }else {
+        this.setState({clatestTx: {amount:"No data", time:"No time"}})
       }
     })
   }
 
+  handleIPFShash = () => {
+    const imageID = this.state.imageID
+    if (this.state.ipfsHash!='' && this.state.ipfsHash!='error'){ 
+      this.setState({showIpfs:true})
+      return}
+    // this.loadReleaseContract().then(release => {
+    //   if (release) {
+    //     release.methods.getIpfsHash(imageID).send({from:this.context.account})
+    //     .then((res)=>{
+    //       if (res != null) {
+    //         this.setState({ipfsHash:res, showIpfs:true})
+    //       }else{
+    //         this.setState({ipfsHash:"error", showIpfs:true})
+    //       }
+    //     })
+    //   }
+    // })
+    this.setState({ipfsHash:"QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB", showIpfs:true})
+    // this.setState({ipfsHash:"error", showIpfs:true})
+    
+  }
+  
+  async loadReleaseContract() {
+    const web3 = this.context.web3
+    const networkId = await web3.eth.net.getId()
+    const releaseNetworkData = ContractRelease.networks[networkId]
+    if (releaseNetworkData) {
+      const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
+      return release
+    }else {
+      return null
+    }
+  }
   
   async loadVerifyContract() {
     const web3 = this.context.web3;
@@ -186,10 +225,28 @@ class Detail extends React.Component{
               { this.state.isMe? <span class="badge bg-primary">me</span>:<span></span>}
               </h5>
               <p className="mx-2 bg-light border rounded text-center text-truncate">{this.state.image.owner}</p>
+
               { this.state.isMe?
                 <div>
                   <h5 className="mx-3" style={{ color:"	#B22222"}}>IPFS Hash (CID)</h5>
-                  <p className="mx-2 bg-light border rounded text-center text-break">{this.state.image.ipfsHash}</p>
+                  { this.state.showIpfs? 
+                    <div className="d-flex justify-content-center my-1">
+                      <button className="btn btn-link btn-sm" onClick={()=>{this.setState({showIpfs:false})}}>hide</button>
+                      {this.state.ipfsHash!='' && this.state.ipfsHash!='error'?
+                        <button className="btn btn-link btn-sm">
+                          <a href="" target="_blank">get original image</a>
+                        </button>:<span></span>  
+                      }
+                    </div>
+                    :<span></span>}
+  
+                  { this.state.showIpfs?
+                    <p className="mx-2 bg-light border rounded text-center text-break">
+                      {this.state.ipfsHash}
+                    </p>  
+                    :<div className="mx-2 mb-3 bg-light border rounded text-center">
+                      <button className="btn btn-link btn-sm" onClick={this.handleIPFShash}>get IPFS hash from blockchain</button></div>
+                  }
                 </div>:<div></div>}
               <h5 className="mx-3" style={{ color:"#4169E1"}}>SHA3(keccak256)</h5>
               <p className="mx-2 bg-light border rounded text-center text-break">{this.state.image.sha3}</p>

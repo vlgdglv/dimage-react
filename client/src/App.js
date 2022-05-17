@@ -90,6 +90,7 @@ class App extends Component {
                 <Route path="/purchase/:imageID" component={Purchase} />
                 <Route path="/tx/:txID" component={Transaction} />
                 <Route path="/trades" component={Trades} />
+                <Route path="/account" component={PageAccount} />
                 <Route path="/error" component={Error}/>
                 <Route component={Error} />
               </Switch>

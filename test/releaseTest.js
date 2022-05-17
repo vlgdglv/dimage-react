@@ -105,5 +105,14 @@ contract('Release',([deployer, author, buyer]) => {
       // console.log(atxCount)
       assert.equal(atxCount,1,"after tx count right")      
     })
+
+    it('get ipfs hash', async() => {
+      console.log(await release.getIpfsHash(1,{from: buyer}))   
+      // const  change =  await release.incTxCount(1, {from:buyer});   
+      // console.log(await release.getIpfsHash(1,{from: author}))
+      await release.getIpfsHash(1,{from: author}).should.be.rejected
+      // const atxCount = await release.getTxCount(1);    
+      // console.log(atxCount)     
+    })
   })
 })

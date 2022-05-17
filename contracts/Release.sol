@@ -4,9 +4,9 @@ pragma solidity ^0.8.12;
 contract Release{
     
     string public contractName;
-    uint public imageCount = 0;            //图片计数
-    mapping(uint => Image) public images;  //使用mapping存储图片信息
-    mapping(bytes32 => uint8) public released; //记录图片SHA3
+    uint public imageCount = 0;            //图片计数&编号
+    mapping(uint => Image) private images;  //使用mapping存储图片信息
+    mapping(bytes32 => uint8) private released; //记录图片SHA3
     
     struct Image {
         uint timestamp;         //图片发布时间戳
@@ -108,6 +108,12 @@ contract Release{
     function getTxCount(uint imageID) public view returns(uint){
       require(imageID > 0 && imageID <= imageCount);
       return images[imageID].txCount;
+    }
+
+    function getIpfsHash(uint imageID) public view returns(string memory){
+      require(imageID > 0 && imageID <= imageCount);
+      require(msg.sender == images[imageID].owner);
+      return images[imageID].ipfsHash;
     }
 
     function getImageOwner(uint imageID) public view returns(address) {

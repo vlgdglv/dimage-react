@@ -13,6 +13,7 @@ import { releaseImage, uploadImage,getImageBySHA } from "../http/release";
 import Footer from "../components/Footer";
 import AccountInfo from "../components/AccountInfo";
 import MyAlert from "../components/MyAlert";
+import {compressors} from "glize/index"
 
 const watermark = require('watermarkjs')
 const ipfsClient = require('ipfs-http-client');
@@ -79,7 +80,15 @@ class Release extends React.Component{
 
     }
   }
-
+ 
+  async encodeImage  (data) {
+    await new Promise(resolve => {
+      compressors.compress(data)
+    }).then((res)=> {
+      console.log(res)
+    })
+  } 
+  
   captureFile = (event) => {
     event.preventDefault()
     const file = event.target.files[0]
@@ -97,6 +106,7 @@ class Release extends React.Component{
       //keccak-256
       const sha3 = Web3.utils.sha3(Buffer(bufferReader.result)) 
       this.setState({sha3})
+      // this.encodeImage(data)
       this.uploadThumbnail(this.state.imgFile,sha3).then((res)=>{
         if (res.success) {
           this.setState({thumbnailPath:res.data.thumbnailPath})
@@ -131,14 +141,14 @@ class Release extends React.Component{
       this.setState({sign:result})
 
       ipfs.add(this.state.buffer).then((ipfsHash, error) => {
-        console.log("ipfs hash = " + ipfsHash)
+        console.log("ipfs hash = " + ipfsHash.path)
         if (error) {
           console.error(error)
           return
         }
-        this.setState({ipfsHash:ipfsHash})
+        this.setState({ipfsHash:ipfsHash.path})
 
-        const hash = ipfsHash; 
+        const hash = ipfsHash.path; 
         const imgID = this.state.imgID;
         const sha3 = this.state.sha3;
         const sign = this.state.sign;

@@ -1,7 +1,7 @@
 import React from "react";
 import { Container,Card, } from "react-bootstrap";
 import CardHeader from "react-bootstrap/esm/CardHeader";
-
+import { withRouter } from "react-router";
 import { getImageByID, getThumbnail } from "../http/image";
 import { getLatestTx } from "../http/purchase";
 import Footer from "../components/Footer";
@@ -69,19 +69,21 @@ class Detail extends React.Component{
     if (this.state.ipfsHash!='' && this.state.ipfsHash!='error'){ 
       this.setState({showIpfs:true})
       return}
-    // this.loadReleaseContract().then(release => {
-    //   if (release) {
-    //     release.methods.getIpfsHash(imageID).send({from:this.context.account})
-    //     .then((res)=>{
-    //       if (res != null) {
-    //         this.setState({ipfsHash:res, showIpfs:true})
-    //       }else{
-    //         this.setState({ipfsHash:"error", showIpfs:true})
-    //       }
-    //     })
-    //   }
-    // })
-    this.setState({ipfsHash:"QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB", showIpfs:true})
+    this.loadReleaseContract().then(release => {
+      if (release) {
+        release.methods.getIpfsHash(imageID).call({from:this.state.account})
+        .then((res)=>{
+          if (res != null) {
+            this.setState({ipfsHash:res, showIpfs:true})
+            console.log(res)
+          }else{
+            this.setState({ipfsHash:"error", showIpfs:true})
+          }
+        })
+      }
+    })
+    
+    // this.setState({ipfsHash:"QmPK1s3pNYLi9ERiq3BDxKa4XosgWwFRQUydHUtz4YgpqB", showIpfs:true})
     // this.setState({ipfsHash:"error", showIpfs:true})
     
   }
@@ -132,6 +134,12 @@ class Detail extends React.Component{
       this.setState({imgSrc:url})
       this.setState({loading:false})
     })
+  }
+  handleImageView = () => {
+    this.props.history.push({pathname:'/image', 
+      query:{ ipfsHash: this.state.ipfsHash, 
+              account:this.state.account,
+              title: this.state.image.title} })
   }
 
   popAlert = (type,message) => {
@@ -233,8 +241,10 @@ class Detail extends React.Component{
                     <div className="d-flex justify-content-center my-1">
                       <button className="btn btn-link btn-sm" onClick={()=>{this.setState({showIpfs:false})}}>hide</button>
                       {this.state.ipfsHash!='' && this.state.ipfsHash!='error'?
-                        <button className="btn btn-link btn-sm">
-                          <a href="" target="_blank">get original image</a>
+                        <button className="btn btn-link btn-sm"
+                          onClick={this.handleImageView}
+                        >
+                          get original image
                         </button>:<span></span>  
                       }
                     </div>
@@ -270,4 +280,4 @@ class Detail extends React.Component{
   }
 }
 
-export default Detail;
+export default withRouter(Detail);

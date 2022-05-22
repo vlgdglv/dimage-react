@@ -11,10 +11,9 @@ class NoWeb3Alt extends React.Component{
       <Container style={{ paddingTop:"120px", maxWidth:"80%"}}>
         <main className="text-center" >
           {/* <h1 >One more step to Dimage!</h1> */}
-          <h3 className="py-3"> </h3>
-          <div class="d-flex align-items-center">
+          <div className="d-flex align-items-center">
             <h3>Connecting to Ethereum network...</h3>
-            <div class="spinner-grow ms-auto" style={{width: "3rem", height:"3rem"}}
+            <div className="spinner-grow ms-auto" style={{width: "3rem", height:"3rem"}}
               role="status" aria-hidden="true"></div>
           </div>
           <hr></hr>
@@ -36,9 +35,7 @@ class NoWeb3Alt extends React.Component{
             <h4>Connect with your account</h4>
           </div>          
         </div>
-        <div className="fixed-bottom">
-          <Footer />
-        </div>
+        <div className="fixed-bottom"><Footer /></div>
       </Container>
     )
   }

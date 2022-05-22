@@ -53,10 +53,8 @@ class Modals extends React.Component{
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-success"  
-                data-bs-dismiss="modal" id={this.props.onIdx}
-                onClick={this.props.handleConfirm}
-                >Confirm</button>
+                <button type="button" class="btn btn-success"  data-bs-dismiss="modal"
+                  onClick={this.props.handleConfirm}>Confirm</button>
               </div>
             </div>
           </div>
@@ -100,10 +98,8 @@ class Modals extends React.Component{
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger"  
-                data-bs-dismiss="modal" id={this.props.onIdx}
-                onClick={this.props.handleDecline}
-                >Decline</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal" 
+                  onClick={this.props.handleDecline}>Decline</button>
               </div>
             </div>
           </div>
@@ -143,10 +139,8 @@ class Modals extends React.Component{
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-danger"
-                 data-bs-dismiss="modal" id={this.props.onIdx}
-                 onClick={this.props.handleCancel}
-                >Still Cancel</button>
+                <button type="button" class="btn btn-danger" data-bs-dismiss="modal" 
+                  onClick={this.props.handleCancel} >Cancel</button>
               </div>
             </div>
           </div>
@@ -172,20 +166,16 @@ class Modals extends React.Component{
                   <hr></hr>
                   <p style={{marginBottom:"0"}}>SHA3 </p>
                   <p style={{marginBottom:"0"}} className="text-primary text-break">{this.props.onTx.sha3}</p>
-                  
                 </div>
               </div>
               <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary"
-                 data-bs-dismiss="modal" id={this.props.onIdx}
-                 onClick={this.props.handleSign}
-                >Sign</button>
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal"
+                  onClick={this.props.handleSign} >Sign</button>
               </div>
             </div>
           </div>
         </div>
-        
       </div>
     )
   }

@@ -1,23 +1,21 @@
 import React, { useState, useEffect} from "react";
 import Pagination from "react-bootstrap/Pagination";
 
-
+//pagination components 
 const MyPagination = (props) => {
   const [pageArray, setPageArray] = useState([]);
 
   useEffect(() => {
     let totPages = parseInt(props.totPages);
     let currentPage = parseInt(props.currentPage);
-    // console.log("Pagination: total pages = " + totPages)
-    // console.log("Pagination: current page= " + currentPage)
+    
+    console.log(totPages)
 
     let pageArr = [];
     if (totPages > 1) {
       if (totPages <= 9) {
-        var i = 1;
-        while (i <= totPages) {
+        for(let i=1; i<=totPages; i++) {
           pageArr.push(i);
-          i++;
         }
       } else {
         if (currentPage <= 5) pageArr = [1, 2, 3, 4, 5, 6, 7, 8, "", totPages];
@@ -60,7 +58,6 @@ const MyPagination = (props) => {
         <Pagination style={{ justifyContent: "center" }}>
           {pageArray.map((ele, index) => {
             const toReturn = [];
-
             if (index === 0) {
               toReturn.push(
                 <Pagination.First
@@ -68,22 +65,17 @@ const MyPagination = (props) => {
                   onClick={
                     props.currentPage === 1
                       ? () => {}
-                      : () => {
-                          props.pageClicked(1);
-                        }
+                      : () => { props.pageClicked(1); }
                   }
                 />
               );
-
               toReturn.push(
                 <Pagination.Prev
                   key={"prevpage"}
                   onClick={
                     props.currentPage === 1
                       ? () => {}
-                      : () => {
-                          props.pageClicked(props.currentPage - 1);
-                        }
+                      : () => { props.pageClicked(props.currentPage - 1); }
                   }
                 />
               );
@@ -98,9 +90,7 @@ const MyPagination = (props) => {
                   onClick={
                     props.currentPage === ele
                       ? () => {}
-                      : () => {
-                          props.pageClicked(ele);
-                        }
+                      : () => { props.pageClicked(ele); }
                   }
                 >
                   {ele}
@@ -114,9 +104,7 @@ const MyPagination = (props) => {
                   onClick={
                     props.currentPage === ele
                       ? () => {}
-                      : () => {
-                          props.pageClicked(props.currentPage + 1);
-                        }
+                      : () => { props.pageClicked(props.currentPage + 1); }
                   }
                 />
               );
@@ -134,7 +122,6 @@ const MyPagination = (props) => {
                 />
               );
             }
-
             return toReturn;
           })}
         </Pagination>

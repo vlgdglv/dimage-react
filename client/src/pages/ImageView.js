@@ -1,14 +1,13 @@
 import React from "react";
-import { Card, Container, Form } from "react-bootstrap";
+//bootstraps
+import { Card, Container } from "react-bootstrap";
 import CardHeader from "react-bootstrap/esm/CardHeader";
-
-
+//web3
 import { web3Context } from '../context/web3Context';
 
 class ImageView extends React.Component{
 
   static contextType = web3Context;
-
   constructor(props) {
     super(props)
     this.state = {
@@ -44,17 +43,17 @@ class ImageView extends React.Component{
             </div>
             </CardHeader>
             <img className="img-responsive center-block rounded" 
-              // src= { this.state.imgSrc }
+              // get original image from ipfs
               src={`https://ipfs.infura.io/ipfs/${this.state.ipfsHash}`}
               alt="No Thumbnail"
-              style={{ maxWidth:"100%" }}
-            />
+              style={{ maxWidth:"100%" }} />
             </Card>
           <hr></hr>
         </main>
       </Container>
-      :<h1 className="text-center" 
-      style={{ paddingTop:"150px",paddingLeft:"auto" }}>No authority!</h1>
+      : <h1 className="text-center" style={{ paddingTop:"150px",paddingLeft:"auto" }}>
+          No authority!
+        </h1>
     )
   }
 }

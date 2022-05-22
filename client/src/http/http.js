@@ -1,7 +1,6 @@
 import axios from 'axios'
 
 axios.defaults.timeout = 50000
-// axios.defaults.baseURL = '/api'
 axios.defaults.headers.post['Content-Type'] = 'application/x-www-form-urlencoded'
 
 axios.interceptors.request.use(
@@ -22,19 +21,6 @@ axios.interceptors.response.use(
   },
   (error) => {
     if (error.response.status) {
-      // switch (error.response.status) {
-      //   case 500:
-      //     Message.error("后台错误")
-      //     break
-      //   case 404:
-      //     Message.error('接口不存在')
-      //     break
-      //   case 490:
-      //     Message.error('无权限')
-      //     break
-      //   default:
-      //     this.$message.error(error.response.message)
-      // }
       console.error(error)
     }
     return Promise.reject(error)

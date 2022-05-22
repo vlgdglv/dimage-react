@@ -1,21 +1,19 @@
 import React from "react";
-import { Card, Container, Form, ThemeProvider } from "react-bootstrap";
+//bootstraps
+import { Card, Container } from "react-bootstrap";
 import CardHeader from "react-bootstrap/esm/CardHeader";
-
-import { newPurchase,getPrevOwner } from "../http/purchase";
-
+//components
 import AccountInfo from "../components/AccountInfo";
+import Footer from "../components/Footer";
+import MyAlert from "../components/MyAlert";
+//http
+import { newPurchase,getPrevOwner } from "../http/purchase";
 import { getImageByID, getThumbnail } from "../http/image";
-
 //web3
 import { web3Context } from '../context/web3Context';
 import ContractPurchase from '../abis/Purchase.json';
 import ContractRelease from "../abis/Release.json";
-//Footer
-import Footer from "../components/Footer";
-import MyAlert from "../components/MyAlert";
-
-const moment = require('moment')
+//other requires
 
 class Purchase extends React.Component{
   
@@ -24,7 +22,6 @@ class Purchase extends React.Component{
     super(props)
     this.state = {
       account:'',
-      netID: 0,
       image: '',
       imageID:'',
       imgSrc:'',
@@ -48,7 +45,6 @@ class Purchase extends React.Component{
       this.setState({releaseAddress: releaseNetworkData.address})
       const release = new web3.eth.Contract(ContractRelease.abi, releaseNetworkData.address)
       const txCount = await release.methods.getTxCount(id).call()
-      // console.log(txCount)
       let ratio = 0.2
       if (txCount <= 10) { ratio = 0.3 }
       else if (txCount <= 50) { ratio = 0.2}
@@ -60,14 +56,11 @@ class Purchase extends React.Component{
   componentDidMount = () => {
     let id = this.props.match.params.imageID
     this.setState({imageID:id})
-    console.log("purchase id="+id)
-
     const account = this.context.account
     const web3 = this.context.web3
     this.setState({account:account, web3:web3})
-
     this.loadBlockchainData(id)
-
+    //get image information
     getImageByID({id:id}).then((res)=> {
       if(res.success) {
         this.setState({image: res.data, isMe: account.toLowerCase() == res.data.owner.toLowerCase() })
@@ -80,8 +73,6 @@ class Purchase extends React.Component{
         })
       }
     })  
-
-
     web3.eth.getBalance(account).then((balance)=>{
       this.setState({balance: web3.utils.fromWei(balance)})
     })
@@ -90,7 +81,7 @@ class Purchase extends React.Component{
   handlePurchaseSumbit = (event) => {
     if(this.state.image.owner == this.state.account){
       alert('You are the owner');
-      return
+      return //you cant buy ur own image
     }
     event.preventDefault()
     this.setState({loading: true})
@@ -100,20 +91,19 @@ class Purchase extends React.Component{
     const prevOwnerPercent = this.state.prevOwnerPercent;
     let authorShare = Number(offerAmount) * authorPercent;
     let ownerShare  = Number(offerAmount) * (1.0 - authorPercent - prevOwnerPercent)
-    console.log(prevOwnerPercent)
 
     offerAmount = web3.utils.toWei(offerAmount, 'Ether')
 
     let contractInstance = new web3.eth.Contract(ContractPurchase.abi)
     
     const releaseAddress = this.state.releaseAddress
-    console.log("release addr = " + releaseAddress)
     const imageID = this.state.image.imageID;
     const imageOwner = this.state.image.owner.toLowerCase();
     const imageAuthor = this.state.image.author.toLowerCase();
     const purchaser = this.state.account.toLowerCase();
     const sha3 = this.state.image.sha3.toLowerCase();
-    const duration = 3600;
+    const duration = 3600 * 24 * 3; //default purchase duration: 3 day
+    //web3: deploying new purchase contract
     contractInstance.deploy({
       data: ContractPurchase.bytecode,
       arguments: [releaseAddress,imageID,purchaser,duration,sha3],
@@ -125,9 +115,7 @@ class Purchase extends React.Component{
     .then((newContractInstance) => {
       const address = newContractInstance.options.address
       const contract = new web3.eth.Contract(ContractPurchase.abi, address)
-      console.log(address)
       contract.methods.launchTime().call().then((launchTime) => {
-
         let obj = {
           contractAddress: address,
           purchaser: purchaser,
@@ -141,6 +129,7 @@ class Purchase extends React.Component{
           launchTime: launchTime,
           duration: duration
         }
+        //update new purchase contract to database
         newPurchase(obj, true).then((res) => {
           this.setState({loading: false})
           if (res.success){
@@ -156,6 +145,7 @@ class Purchase extends React.Component{
     })
   }
 
+  //get image thumbnail
   handleImageSrc = (path) => {
     let formData = new FormData()
     formData.append("path", path)
@@ -163,17 +153,12 @@ class Purchase extends React.Component{
       let blob  = new Blob([res])
       let url = URL.createObjectURL(blob);
       this.setState({imgSrc:url})
-      // console.log(res)
     })
   }
 
-  popAlert = (type,message) => {
-    this.setState({type, message, showAlert:true})
-  }
+  popAlert = (type,message) => { this.setState({type, message, showAlert:true}) }
 
-  closeAlert = () => { 
-    this.setState({showAlert:false})
-  }
+  closeAlert = () => { this.setState({showAlert:false}) }
 
   render() {
     return (
@@ -236,7 +221,7 @@ class Purchase extends React.Component{
             <h4 className="mb-3">Buy this!</h4>
             <form onSubmit={this.handlePurchaseSumbit}>
               <div className="row g-5">
-                <div class="col-12">
+                <div className="col-12">
                   <div className="row g-3">
                     <div className="col-sm-10" style={{ paddingTop:"0"}}>
                       <input type="number" id="offerAmount"
@@ -268,8 +253,8 @@ class Purchase extends React.Component{
             <div style={{ marginTop:"20px"}}>
               {
                   this.state.loading ?
-                  <div class="d-flex align-items-center justify-content-center">
-                    <div class="spinner-border text-primary" role="status" aria-hidden="true"></div>
+                  <div className="d-flex align-items-center justify-content-center">
+                    <div className="spinner-border text-primary" role="status" aria-hidden="true"></div>
                     <div className="mx-1 text-primary">
                       <strong >Continue your operation in MetaMask...</strong>
                     </div>

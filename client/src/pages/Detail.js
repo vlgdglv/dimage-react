@@ -36,6 +36,8 @@ class Detail extends React.Component{
       message:'',
       type:'',
       imageID:'',
+      release:'',
+      verify:'',
     }
   }
 
@@ -109,16 +111,54 @@ class Detail extends React.Component{
     }
   }
 
-  verifySignature = (message, signature) => {
-    this.loadVerifyContract().then((verify) => {
-      verify.methods.verify(message, signature).call()
-      .then((res) => {
-        const message = "Verified Signer : " + res
-        this.popAlert("success",message)
-      })
-    }).catch((error) => {
-      this.popAlert("danger", error.message)
-    })
+  async loadContracts() {
+    await this.loadReleaseContract();
+    await this.loadVerifyContract();
+  }
+
+  async verifySignature (message, signature)  {
+    // this.loadVerifyContract().then((verify) => {
+    //   verify.methods.verify(message, signature).call()
+    //   .then((res) => {
+    //     const message = 
+    //     <div>
+    //       <p>Verified Signer  :  {res}</p>
+    //       <p>Owner from blockchain :</p>
+    //     </div>
+    //     this.popAlert("success",message)
+    //   })
+    // }).catch((error) => {
+    //   this.popAlert("danger", error.message)
+    // })
+    const verify = await this.loadVerifyContract();
+    const release = await this.loadReleaseContract();
+    const verifiedSigner = await verify.methods.verify(message, signature).call()
+    // console.log(verifiedSigner)
+    const owner = await release.methods.getImageOwner(this.state.image.imageID).call()
+    // console.log(owner)
+    if (verifiedSigner.toLowerCase() == owner.toLowerCase()) {
+      const message = 
+        <div>
+          <p>Owner Matched</p>
+          <p>Verified Signer:</p>
+          <p>{verifiedSigner}</p>
+          <hr></hr>
+          <p>Owner from blockchain:</p>
+          <p>{owner}</p>
+        </div>
+      this.popAlert("success",message)
+    }else {
+        const message = 
+          <div>
+            <p>Owner UnMatched!</p>
+            <p>Verified Signer:</p>
+            <p>{verifiedSigner}</p>
+            <hr></hr>
+            <p>BUT owner from blockchain:</p>
+            <p>{owner}</p>
+          </div>
+        this.popAlert("danger",message)
+    }
   }
 
   handleImageSrc = (path) => {

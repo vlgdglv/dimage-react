@@ -15,9 +15,9 @@ const MyAlert = (props) => {
       <Alert transition={true}
         style={{ maxWidth:"80%"}} variant={props.type} onClose={props.closeAlert} dismissible>
         <Alert.Heading>{header}</Alert.Heading>
-        <p className="text-break align-middle">
+        <div className="text-break align-middle">
           { props.message }
-        </p>
+        </div>
       </Alert>
     )
   }else{

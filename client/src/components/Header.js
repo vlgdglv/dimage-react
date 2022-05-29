@@ -11,7 +11,7 @@ class Header extends React.Component {
             <button  type="button" className="btn btn-dark   position-relative">
               <strong>Dimage</strong>
               <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger">
-                beta<span class="visually-hidden">unread messages</span>
+                beta<span className="visually-hidden">unread messages</span>
               </span>
             </button>
           </Navbar.Brand>

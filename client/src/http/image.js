@@ -9,6 +9,8 @@ export const getImageByAuthor = (p) => get('/getimagebyauthor', p)
 
 export const getImageByOwner = (p) => get('/getimagebyowner', p)
 
+export const getImageFromIPFS = (url) => get(url)
+
 export function getThumbnail(data) {
   let url = '/thumbnail'
   return new Promise((resolve, reject) => {

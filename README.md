@@ -11,3 +11,37 @@
 ​	3.Developing front end with React.
 
 ##### Contact author: baosfw@gmail.com
+
+#### Env:
+
+Truffle v5.5.2 (core: 5.5.2)
+
+Ganache v7.0.1
+
+Solidity v0.5.16 (solc-js)
+
+Node v14.17.3
+
+Web3.js v1.5.3
+
+npm v6.14.13
+
+#### Usage：
+
+Front end:
+
+0. Make sure your blockchain env set up, local chain(say Ganache) recommended.
+
+1. In root directory, open the shell, wait for completion.
+
+```shell
+truffle migrate --reset
+```
+
+2. Make sure your npm env set up, all modules installed.
+3. Change to "/client" directory, do and wait.
+
+```shell
+npm run start
+```
+
